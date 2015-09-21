@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+	<link href="//bootswatch.com/darkly/bootstrap.min.css" rel="stylesheet">
+	<body>
+		<div class="col-lg-8 col-md-7 col-sm-6">
+            <h1>Welcome to Connexus</h1>
+            <p class="lead">{{String1}}</p>
+			<p>
+				<a class="btn btn-primary btn-lg" href="{{logout_url}}"> Logout</a>
+			</p>
+			<p>
+				<a class="btn btn-primary" href="{{create_url}}"> Create</a>
+			</p>
+
+			<p>
+				<a class="btn btn-primary" href="{{view_url}}"> View</a>
+			</p>
+			<p>
+				<a class="btn btn-primary" href="{{search_url}}"> Search</a>
+			</p>
+			<p>
+				<a class="btn btn-primary" href="{{trending_url}}"> Trending</a>
+			</p>
+		</div>
+	</body>
+</html>
+{% endautoescape %}

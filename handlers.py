@@ -46,48 +46,53 @@ class MainPage(webapp2.RequestHandler):
 class ManagementHandler(webapp2.RequestHandler):
     def get(self):
         template_values = {'String1': "This is the management page",
-                           'logout_url': users.create_logout_url("/")}
-        template = JINJA_ENVIRONMENT.get_template('temp_subpage.html')
+                           'logout_url': users.create_logout_url("/"),
+                           'create_url': "/stream_create",
+                           'view_url': "/stream_view",
+                           'search_url': "/stream_search",
+                           'trending_url': "/stream_trending",
+                           }
+        template = JINJA_ENVIRONMENT.get_template('manage_temp.html')
         self.response.write(template.render(template_values))
 
 class CstreamHandler(webapp2.RequestHandler):
     def get(self):
-        template_values = {'String1': "This is the management page",
+        template_values = {'String1': "This is the create page",
                            'logout_url': users.create_logout_url("/")}
         template = JINJA_ENVIRONMENT.get_template('temp_subpage.html')
         self.response.write(template.render(template_values))
 
 class VstreamHandler(webapp2.RequestHandler):
     def get(self):
-        template_values = {'String1': "This is the management page",
+        template_values = {'String1': "This is the view page",
                            'logout_url': users.create_logout_url("/")}
         template = JINJA_ENVIRONMENT.get_template('temp_subpage.html')
         self.response.write(template.render(template_values))
 
 class LstreamHandler(webapp2.RequestHandler):
     def get(self):
-        template_values = {'String1': "This is the management page",
+        template_values = {'String1': "This is the list page",
                            'logout_url': users.create_logout_url("/")}
         template = JINJA_ENVIRONMENT.get_template('temp_subpage.html')
         self.response.write(template.render(template_values))
 
 class SstreamHandler(webapp2.RequestHandler):
     def get(self):
-        template_values = {'String1': "This is the management page",
+        template_values = {'String1': "This is the search page",
                            'logout_url': users.create_logout_url("/")}
         template = JINJA_ENVIRONMENT.get_template('temp_subpage.html')
         self.response.write(template.render(template_values))
 
 class TstreamHandler(webapp2.RequestHandler):
     def get(self):
-        template_values = {'String1': "This is the management page",
+        template_values = {'String1': "This is the trending page",
                            'logout_url': users.create_logout_url("/")}
         template = JINJA_ENVIRONMENT.get_template('temp_subpage.html')
         self.response.write(template.render(template_values))
 
 class ErrorHandler(webapp2.RequestHandler):
     def get(self):
-        template_values = {'String1': "This is the management page",
+        template_values = {'String1': "This is the error page",
                            'logout_url': users.create_logout_url("/")}
         template = JINJA_ENVIRONMENT.get_template('temp_subpage.html')
         self.response.write(template.render(template_values))
