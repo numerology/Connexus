@@ -59,7 +59,9 @@ class CstreamHandler(webapp2.RequestHandler):
     def get(self):
         template_values = {'String1': "This is the create page",
                            'logout_url': users.create_logout_url("/")}
-        template = JINJA_ENVIRONMENT.get_template('temp_subpage.html')
+        template = JINJA_ENVIRONMENT.get_template('temp_create.html')
+        # in create page we need a link routed to createhandler api.
+
         self.response.write(template.render(template_values))
 
 class VstreamHandler(webapp2.RequestHandler):
@@ -71,6 +73,21 @@ class VstreamHandler(webapp2.RequestHandler):
 
 class LstreamHandler(webapp2.RequestHandler):
     def get(self):
+        api_args = {
+            "n": 100
+        }
+        api_req = self.get_internal_api_request('get', 'list_api', api_kwargs)
+        api_resp = api_req.send()
+        if api_resp is None:
+            #need to add an error template
+            raise WebException("error.html", "We couldn't get the list of streams")
+
+        for stream in api_resp["streams"]:
+            stream["linkUrl"] = self.base_uri + webapp2.uri_for("Web-ViewStream", id=stream["id"])
+
+      #  self.data["streams"] = api_resp["streams"]
+      #  self.data["active_page"] = "view"
+     #   self.render_template("view_list.html", self.data)
         template_values = {'String1': "This is the list page",
                            'logout_url': users.create_logout_url("/")}
         template = JINJA_ENVIRONMENT.get_template('temp_subpage.html')

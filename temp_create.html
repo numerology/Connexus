@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+	<link href="//bootswatch.com/darkly/bootstrap.min.css" rel="stylesheet">
+	<body>
+		<div class="col-lg-8 col-md-7 col-sm-6">
+            <h1>Welcome to Connexus</h1>
+            <p class="lead">{{String1}}</p>
+			<p>
+				<a class="btn btn-primary btn-lg" href="{{logout_url}}"> Logout</a>
+			</p>
+			<form action = "/api/create_stream" method = "post">
+				<div>
+					<textarea name = "name" rows = "3" cols = "60"></textarea>
+					<textarea name = "cover_url" rows = "3" cols = "60"></textarea>
+				</div>
+				<div><input type = "submit" value = "create stream"></div>
+			</form>
+		</div>
+	</body>
+</html>
+{% endautoescape %}

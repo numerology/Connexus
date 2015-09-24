@@ -1,9 +1,15 @@
 __author__ = 'Jiaxiao Zheng'
 
 from handlers import *
+from api_handler import *
+from api_handler import image
+from api_handler import stream
 import webapp2
 
 routes = [
+   # webapp2.Route(r'/api/stream_list', handler = ListStreamHandler, name = 'list_api'),
+    webapp2.Route(r'/api/create_stream', handler = CreateStreamHandler, name = 'list_api'),
+
     webapp2.Route(r'/', handler = MainPage, name = 'mainpage'),
     webapp2.Route(r'/management', handler = ManagementHandler, name = 'management'),
     webapp2.Route(r'/stream_create', handler = CstreamHandler, name = 'createstream'),
