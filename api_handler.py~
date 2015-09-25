@@ -95,18 +95,28 @@ class CreateStreamHandler(webapp2.RequestHandler):
 
         if user is None:
             self.redirect("/error")
+<<<<<<< HEAD
         name = self.request.get("name") #TODO: check whether name is not use
         owner = user.user_id()
         subscriber = parseSubscriber(self.request.get("subscriber")) #TODO: parser of subscriber emails
         subscribe_message = self.request.get("subscribe_message") #TODO: send emails to subscribers
-        new_stream = stream(name = self.request.get('name'), owner = user.user_id(), cover_url = self.request.get('cover_url'),tags=[], figures = [])
-        #new_stream = stream(name = 'test', owner = user.user_id(), cover_url = 'test_url',tags=[], figures = [])
-
+        new_stream = stream(name = self.request.get("name"), owner = user.user_id(), cover_url = self.request.get("cover_url"),figures = [],tags = [])
         new_stream.put()
+
+        self.redirect("/management")
 
 def parseSubscriber(subscriber_string):
     "This function parse the email addresses from string"
     if subscriber_string.empty():
         return []
      
+=======
 
+        new_stream = stream(name = self.request.get('name'), owner = user.user_id(), cover_url = self.request.get('cover_url'),tags=[], figures = [])
+        #new_stream = stream(name = 'test', owner = user.user_id(), cover_url = 'test_url',tags=[], figures = [])
+
+        new_stream.put()
+
+
+        self.redirect("/management")
+>>>>>>> 8de3e273310bb4492b876df398f7637ba3298a5a

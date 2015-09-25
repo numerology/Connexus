@@ -74,6 +74,7 @@ class LstreamHandler(webapp2.RequestHandler):
         if user is None:
             self.redirect("/error")
         stream_list = stream.query()
+        print("running list")
         template_values = {'stream_list': stream_list,
                            'logout_url': users.create_logout_url("/")}
         template = JINJA_ENVIRONMENT.get_template('list_temp.html')
