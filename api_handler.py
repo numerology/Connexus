@@ -10,6 +10,8 @@ from google.appengine.ext.webapp import blobstore_handlers
 import webapp2
 import jinja2
 import os
+import re #used to parse list of emails
+from google.appengine.api import mail #mailing functions in invitation, notification
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -35,7 +37,12 @@ class stream(ndb.Model):
     figures = ndb.StructuredProperty(image,repeated = True)
     tags = ndb.StringProperty()
     cover_url = ndb.StringProperty()
+    #YW: add property to record subscribers
+    subscriber = ndb.UserProperty(repeated = True
 
+class user_subscribe(ndb.Model):
+    identity = ndb.StringProperty()
+    subscribed_streams = ndb.StringProperty(repeated = True)
 
 class ViewStreamHandler(webapp2.RequestHandler):
     def get(self,id):
@@ -88,8 +95,17 @@ class CreateStreamHandler(webapp2.RequestHandler):
 
         if user is None:
             self.redirect("/error")
-
+        name = self.request.get("name") #TODO: check whether name is not use
+        owner = user.user_id()
+        subscriber = parseSubscriber(self.request.get("subscriber")) #TODO: parser of subscriber emails
+        subscribe_message = self.request.get("subscribe_message") #TODO: send emails to subscribers
         new_stream = stream(name = self.request.get("name"), owner = user.user_id(), cover_url = self.request.get("cover_url"),figures = [],tags = [])
         new_stream.put()
 
         self.redirect("/management")
+
+def parseSubscriber(subscriber_string):
+    "This function parse the email addresses from string"
+    if subscriber_string.empty():
+        return []
+     

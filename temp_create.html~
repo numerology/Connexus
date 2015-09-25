@@ -22,7 +22,7 @@
                     <div class = "form-group">
 			        <label for = "inputsubscriber" class = "col-lg-2 control-label">Add subscribers</label> 
 				        <div class = "col-lg-10">
-                            <input type = "text" class = "form-control" id = "subscriber" placeholder = "Input your friends emails to subscribe">
+                            <input type = "text" class = "form-control" id = "subscriber" placeholder = "Input your friends emails">
                             <input type = "text" class = "form-control" id = "subcribe_message" placeholder = "(Optional) Message for your friends">
 				        </div>			        
 		            </div>
