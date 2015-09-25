@@ -33,7 +33,7 @@ class stream(ndb.Model):
     name = ndb.StringProperty()
     owner = ndb.StringProperty()
     figures = ndb.StructuredProperty(image,repeated = True)
-    tags = ndb.StringProperty()
+    tags = ndb.StringProperty(repeated = True)
     cover_url = ndb.StringProperty()
 
 
@@ -61,7 +61,7 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             stream_name = self.request.get("stream_name")
             user_photo = image(owner=users.get_current_user().user_id(),
                                    blob_key=upload.key())
-
+            user_photo.put()
             all_stream = stream.query()
             for siter in all_stream:
                 if str(siter.name) == stream_name:
@@ -72,7 +72,7 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
                     break
 
           #  current_stream = stream.get_by_id(stream_id)
-            #TODO: uploading still needs some timt to complete, we need to control the speed of redirect
+            #TODO: uploading still needs some time to complete, we need to control the speed of redirect
             self.redirect('/view/%s' % siter.key.id())
 
 
@@ -89,7 +89,10 @@ class CreateStreamHandler(webapp2.RequestHandler):
         if user is None:
             self.redirect("/error")
 
-        new_stream = stream(name = self.request.get("name"), owner = user.user_id(), cover_url = self.request.get("cover_url"),figures = [],tags = [])
+        new_stream = stream(name = self.request.get('name'), owner = user.user_id(), cover_url = self.request.get('cover_url'),tags=[], figures = [])
+        #new_stream = stream(name = 'test', owner = user.user_id(), cover_url = 'test_url',tags=[], figures = [])
+
         new_stream.put()
+
 
         self.redirect("/management")
