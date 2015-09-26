@@ -22,6 +22,6 @@ routes = [
     webapp2.Route(r'/upload_fig', handler = UploadHandler, name = 'uploadpage'),
     webapp2.Route(r'/upload_photo', handler = PhotoUploadHandler, name = 'uploadapi'),
     #YW add routing for subscribe pate
-    webapp2.Route(r'/subscribe', handler = SubscribeStreamHandler, name = 'subscribestream')
+    webapp2.Route(r'/subscribe/<stream_id:[\w-]+>', handler = SubscribeStreamHandler, name = 'subscribestream')
 ]
 app = webapp2.WSGIApplication(routes = routes, debug = True)
