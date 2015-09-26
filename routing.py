@@ -20,6 +20,8 @@ routes = [
     webapp2.Route(r'/error', handler = ErrorHandler, name = 'error'),
     webapp2.Route(r'/view/<id:[\w-]+>', handler = ViewStreamHandler, name = 'viewsingle'),
     webapp2.Route(r'/upload_fig', handler = UploadHandler, name = 'uploadpage'),
-    webapp2.Route(r'/upload_photo', handler = PhotoUploadHandler, name = 'uploadapi')
+    webapp2.Route(r'/upload_photo', handler = PhotoUploadHandler, name = 'uploadapi'),
+    #YW add routing for subscribe pate
+    webapp2.Route(r'/subscribe', handler = SubscribeStreamHandler, name = 'subscribestream')
 ]
 app = webapp2.WSGIApplication(routes = routes, debug = True)
