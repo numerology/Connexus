@@ -10,7 +10,7 @@ from google.appengine.ext.webapp import blobstore_handlers
 import webapp2
 import jinja2
 import os
-
+import time
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
     extensions=['jinja2.ext.autoescape'],
@@ -35,6 +35,10 @@ class stream(ndb.Model):
     figures = ndb.StructuredProperty(image,repeated = True)
     tags = ndb.StringProperty(repeated = True)
     cover_url = ndb.StringProperty()
+    num_of_view = ndb.IntegerProperty()
+
+    def trending_query(cls):
+        return cls.query().order(cls.num_of_view)
 
 
 class ViewStreamHandler(webapp2.RequestHandler):
@@ -46,10 +50,14 @@ class ViewStreamHandler(webapp2.RequestHandler):
                 current_stream = siter
                 break
 
+        current_stream.num_of_view += 1
+        current_stream.put()
+
+      #  nviews = Num_Of_Views[id]
         for img in current_stream.figures:
             PhotoUrls.append(images.get_serving_url(img.blob_key))
 
-        template_values = {'String1': current_stream.name, 'url_list': PhotoUrls}
+        template_values = {'String1': current_stream.name, 'url_list': PhotoUrls, 'nviews':current_stream.num_of_view}
         template = JINJA_ENVIRONMENT.get_template('view_stream.html')
         self.response.write(template.render(template_values))
 
@@ -70,9 +78,9 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
                     print "put is being called"
                     siter.put()
                     break
-
+            time.sleep(1)
           #  current_stream = stream.get_by_id(stream_id)
-            #TODO: uploading still needs some time to complete, we need to control the speed of redirect
+
             self.redirect('/view/%s' % siter.key.id())
 
 
@@ -89,10 +97,10 @@ class CreateStreamHandler(webapp2.RequestHandler):
         if user is None:
             self.redirect("/error")
 
-        new_stream = stream(name = self.request.get('name'), owner = user.user_id(), cover_url = self.request.get('cover_url'),tags=[], figures = [])
+        new_stream = stream(name = self.request.get('name'), owner = user.user_id(), cover_url = self.request.get('cover_url'),tags=[], figures = [], num_of_view = 0)
         #new_stream = stream(name = 'test', owner = user.user_id(), cover_url = 'test_url',tags=[], figures = [])
 
-        new_stream.put()
-
+        new_key = new_stream.put()
+     #   Num_Of_Views[str(new_key.id())] = 0
 
         self.redirect("/management")
