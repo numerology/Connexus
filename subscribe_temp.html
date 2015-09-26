@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<! How to show the cover and whether the cover should direct to view stream is open to discussion. Need to add Subscribe and Return Button>
+{% autoescape true %}
+<html>
+	<link href="//bootswatch.com/darkly/bootstrap.min.css" rel="stylesheet">
+	<body>
+		<div class="col-lg-8 col-md-7 col-sm-6">
+            <h1>Welcome to Connexus</h1>
+            <p class="lead">Invitation to subscribe {{stream.name}} owned by {{stream.owner}}!</p>
+			<p>
+				<a class="btn btn-primary btn-lg" href="{{logout_url}}"> Logout</a>
+			</p>
+		</div>
+                <a href = "/view/{{stream.key.id()}}" class = thumbnail href = "/view/{{stream.key.id()}}">
+				<img src = "{{stream.cover_url}}" alt="{{stream.name}}">
+					<div class="caption" align="middle">
+						<h1>{{stream.name}}</h1>
+					</div>
+				</a>
+		<form method = "post"> <!Subscribe call the method in SubscribeHandler>
+		    <p><input type = "submit" value = "Subscribe"></p>
+		</form>
+		<p>
+			<a class="btn btn-primary" href="{{return_url}}">Return</a>
+		</p>
+	</body>
+</html>
+{% endautoescape %}
