@@ -7,6 +7,7 @@ from google.appengine.ext import ndb
 from google.appengine.api import users, files, images
 from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
+from google.appengine.api import mail
 import webapp2
 import jinja2
 import os
@@ -35,10 +36,13 @@ class stream(ndb.Model):
     figures = ndb.StructuredProperty(image,repeated = True)
     tags = ndb.StringProperty(repeated = True)
     cover_url = ndb.StringProperty()
+    #TODO: the num_of_view should be calculated by a queue, if a view is outdated, it should be removed
     num_of_view = ndb.IntegerProperty()
 
-    def trending_query(cls):
-        return cls.query().order(cls.num_of_view)
+class trend_subscribers(ndb.Model):
+    user_email = ndb.StringProperty()
+    report_freq = ndb.IntegerProperty()
+
 
 
 class ViewStreamHandler(webapp2.RequestHandler):
@@ -104,3 +108,45 @@ class CreateStreamHandler(webapp2.RequestHandler):
      #   Num_Of_Views[str(new_key.id())] = 0
 
         self.redirect("/management")
+
+class TrendReportHandler(webapp2.RequestHandler):
+    def get(self, freq):
+        subscriber_list = trend_subscribers.query(trend_subscribers.report_freq == int(freq))
+        print "trend sending"
+        for s in subscriber_list:
+            cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
+            cmail.to = s.user_email
+            cmail.body = "Periodically trending msg tester."
+            cmail.send()
+
+class TrendingFrequencyHandler(webapp2.RequestHandler):
+    def post(self):
+        user = users.get_current_user()
+
+        if user is None:
+            self.redirect("/error")
+
+        subscriber_list = trend_subscribers.query()
+        flag = False
+        for s in subscriber_list:
+            if s.user_email == str(user.email()):
+                try:
+                    s.report_freq = int(self.request.get("frequency"))
+                    s.put()
+                except:
+                    s.report_freq = 0
+                    s.put()
+                flag = True
+                cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
+                cmail.to = s.user_email
+                cmail.body = "You have changed your updating preference."
+                cmail.send()
+                break
+        if(not flag):
+            try:
+                new_subscriber = trend_subscribers(user_email = user.email(), report_freq = int(self.request.get("frequency")))
+            except:
+                new_subscriber = trend_subscribers(user_email = user.email(), report_freq = 0)
+            new_subscriber.put()
+
+        self.redirect("/stream_trending")
