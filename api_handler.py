@@ -117,6 +117,7 @@ class ViewStreamHandler(webapp2.RequestHandler):
                            'url_list': PhotoUrls, 
                            'nviews':current_stream.num_of_view,
                            'stream': current_stream,
+                           'logout_url': users.create_logout_url('/'),
                            'no_subscribe_message': no_subscribe_message,
                            'show_subscribe_button': show_subscribe_button,
                            'subscribe_return_url': subscribe_return_url}
@@ -262,6 +263,7 @@ class SubscribeStreamHandler(webapp2.RequestHandler):
             self.redirect(users.create_login_url(self.request.uri))
             return
         return_url = self.request.get('return_url', DEFAULT_RETURN_URL)
+        print ["Return URL: " + return_url]
         # YW: default return url is /management, or return to the url specified
         queried_stream = stream.get_by_id(int(stream_id))
         if queried_stream is None: # stream not found
@@ -299,6 +301,7 @@ class SubscribeStreamHandler(webapp2.RequestHandler):
         3. redirect to manage page"""
         user = users.get_current_user()
         return_url = self.request.get('return_url','/')
+        print ['SUBSCRIBE POST-return url: '+return_url]
         if user is None:
             self.redirect(users.create_login_url(self.request.uri))
             return
