@@ -20,7 +20,7 @@
 			</a>
 		</div>
 		<div class = "col-lg-8 col-md-7 col-sm-6">
-			<form class = "form-horizontal" action = "/subscribe?stream_name={{ stream_name }}" method = "post"> <!Subscribe call the method in SubscribeHandler>
+			<form class = "form-horizontal" action = "/subscribe/{{stream.key.id()}}" method = "post"> <!Subscribe call the method in SubscribeHandler>
 				<p><input class = "btn btn-primary" type = "submit" value = "Subscribe"></p>
 			</form>
 			<p>

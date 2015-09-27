@@ -10,15 +10,24 @@ from google.appengine.ext.webapp import blobstore_handlers
 import webapp2
 import jinja2
 import os
-import re #used to parse list of emails
-from google.appengine.api import mail #mailing functions in invitation, notification
+import re  # used to parse list of emails
+from google.appengine.api import mail  # mailing functions in invitation, notification
+import logging  # Log messages
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
     extensions=['jinja2.ext.autoescape'],
     autoescape=True)
 
-WEB_URL = 'conexus-yw.appspt.com' #TODO: Change this url to the online application
+INVITATION_EMAIL_PLAIN_TEXT = """
+%(user)s invites you to subscribe to Stream %(stream_name)s on Connexus!
+%(message)s
+
+Please go to this url: %(subscribe_stream_url)s
+"""
+
+WEB_URL = 'connexus-yw.appspot.com'  # TODO: Change this url to the online application
+DEFAULT_RETURN_URL = '/management'  # Default return url for subscribe
 
 # in this api handler, define the services for:
 # management, create stream, view a stream, image upload, view all stream, search streams, and report request
@@ -41,7 +50,7 @@ class stream(ndb.Model):
     tags = ndb.StringProperty(repeated=True)
     cover_url = ndb.StringProperty()
     #YW: add property to record subscribers
-    subscribers = ndb.StringProperty(repeated=True)
+    subscribers = ndb.UserProperty(repeated=True)
 
 
 class subscribe_list(ndb.Model):
@@ -91,34 +100,46 @@ class CreateStreamHandler(webapp2.RequestHandler):
 
         if user is None:
             self.redirect("/error")
-        name = self.request.get("name") #TODO: check whether name is not use
+        stream_name = self.request.get("name") #TODO: check whether name is not use
         same_name_streams = stream.query(stream.name == stream_name)
         if same_name_streams:
             self.redirect('/error')
         owner = user.user_id()
         
-        new_stream = stream(name = self.request.get('name'), owner = user.user_id(), cover_url = self.request.get('cover_url'),tags=[], figures = [])
+        new_stream = stream(name=self.request.get('name'), owner = user.user_id(),
+                            cover_url=self.request.get('cover_url'), tags=[], figures=[])
         # new_stream = stream(name = 'test', owner = user.user_id(), cover_url = 'test_url',tags=[], figures = [])
         new_stream.put()
 
-        subscribers = parseSubscriber(self.request.get("subscriber")) #TODO: parser of subscriber emails
-        subscribe_message = self.request.get("subscribe_message") #TODO: send emails to subscribers
-        message  = mail.EmailMessage()
-        message.sender = user.email() #YW: sender is the creator of the stream
-        message.subject = """Invitation to %(stream_name) on Connexus from %(Invitor)s""" %{"stream_name":name, "Invitor": user.user_id()}
-        url_to_subscribe = (WEB_URL + '/subscribe/%s' % new_stream.key.id())
-        template_values = {'stream_name': name, 'subscribe_stream_url': url_to_subscribe}
-        template = JINJA_ENVIRONMENT.get_template('subscribe_invitation.html')
-        message.body = write(template.render(template_values))
+        subscribers = parseSubscriber(self.request.get('subscriber'))  # TODO: parser of subscriber emails
         for to_addr in subscribers:
-            if mail.is_email.valid(to_addr):
-                message.to = to_addr
-                message.send()
+            print to_addr
+        subscribe_message = self.request.get('subscribe_message')  # TODO: send emails to subscribers
+        invitation_email = mail.EmailMessage()
+        invitation_email.sender = user.email()  # YW:sender is the creator of the stream
+        invitation_email.subject = """Invitation to %(stream_name)s on Connexus from %(Invitor)s""" \
+                          % {"stream_name": stream_name, "Invitor": user.nickname()}
+        url_to_subscribe = (WEB_URL + '/subscribe/%s' % new_stream.key.id())
+        template_values = {'stream_name': stream_name,
+                           'subscribe_message': subscribe_message,
+                           'subscribe_stream_url': url_to_subscribe}
+        template = JINJA_ENVIRONMENT.get_template('subscribe_invitation_email.html')
+        invitation_email.body = (INVITATION_EMAIL_PLAIN_TEXT % {'user': new_stream.owner,
+                                                                'stream_name': new_stream.name,
+                                                                'message': subscribe_message,
+                                                                'subscribe_stream_url': url_to_subscribe})
+        invitation_email.html = template.render(template_values)
+        logging.debug(invitation_email.body)
+        for to_addr in subscribers:
+            if mail.is_email_valid(to_addr):
+                invitation_email.to = to_addr
+                invitation_email.send()
+
+        self.redirect('/management')
 
 
 class SubscribeStreamHandler(webapp2.RequestHandler):
     """Handle subscription to one stream"""
-    DEFAULT_RETURN_URL = '/management'
 
     def get(self, stream_id):
         """Display stream name, display cover, provide two buttons: 1)Subscribe 2)Return to return_url"""
@@ -132,9 +153,9 @@ class SubscribeStreamHandler(webapp2.RequestHandler):
             self.redirect('/error')
         template = JINJA_ENVIRONMENT.get_template('subscribe_temp.html')
         template_values = {'stream': queried_stream,
-                           'logout_url': users.create_logout_url("/"),
+                           'logout_url': users.create_logout_url(WEB_URL),
                            'return_url': return_url}
-        self.response(template.render(template_values))
+        self.response.write(template.render(template_values))
         
     def post(self, stream_id):
         """Subscribe to the stream: 1.add stream to user's stream set; 2.add user to stream's subscriber list;
@@ -148,18 +169,18 @@ class SubscribeStreamHandler(webapp2.RequestHandler):
         already_subscribed = False
         for temp_user in queried_stream.subscribers:  # this for loop is used to check the id of users
             if user.user_id() == temp_user.user_id():
-                queried_stream.remove(temp_user)
-                queried_stream.append(user)  # update user object
+                queried_stream.subscribers.remove(temp_user)
+                queried_stream.subscribers.append(user)  # update user object
                 already_subscribed = True
                 break
         if not already_subscribed:
-            queried_stream.append(user)
+            queried_stream.subscribers.append(user)
         queried_stream.put()  # update stream
-        queried_subscribe_list = subscribe_list.query(subscribe_list.identity == user.user_id()).fetch(1)
+        queried_subscribe_list = subscribe_list.query(subscribe_list.identity == user.user_id()).get()
         # YW: should return at most one subscribe list
         if queried_subscribe_list is None:
-            queried_subscribe_list = subscribe_list(identity=user.user_id())
-        queried_subscribe_list.subscribed_streams.append(stream_name)
+            queried_subscribe_list = subscribe_list(identity=user.user_id(), subscribed_streams=[])
+        queried_subscribe_list.subscribed_streams.append(queried_stream.name)
         queried_subscribe_list.put()
 
         self.redirect('/management')
@@ -169,7 +190,7 @@ class SubscribeStreamHandler(webapp2.RequestHandler):
 # [Helper function for CreateStreamHandler]
 def parseSubscriber(subscriber_string):
     """This function parse the email addresses from string"""
-    if subscriber_string.empty():
+    if subscriber_string == '':
         return []
     else:
         splitter = r'[,;\t\r\n]'
