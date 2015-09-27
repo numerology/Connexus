@@ -114,7 +114,9 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
     def post(self):
        # self.redirect('/management')
         try:
+            print ("upload handler is running")
             upload = self.get_uploads()[0]
+            print ("upload handler is running")
             stream_name = self.request.get("stream_name")
             user_photo = image(owner=users.get_current_user().user_id(),
                                    blob_key=upload.key())
@@ -127,7 +129,7 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
                     print "put is being called"
                     siter.put()
                     break
-            time.sleep(1)
+          #  time.sleep(1)
           #  current_stream = stream.get_by_id(stream_id)
 
             self.redirect('/view/%s' % siter.key.id())
@@ -148,13 +150,10 @@ class CreateStreamHandler(webapp2.RequestHandler):
         owner = user.user_id()
         
         new_stream = stream(name=self.request.get('name'), owner = user.user_id(),
-                            cover_url=self.request.get('cover_url'), tags=[], figures=[])
+                            cover_url=self.request.get('cover_url'), tags=[], figures=[], num_of_view = 0)
         # new_stream = stream(name = 'test', owner = user.user_id(), cover_url = 'test_url',tags=[], figures = [])
         new_stream.put()
 
-
-        new_stream = stream(name = self.request.get('name'), owner = user.user_id(), cover_url = self.request.get('cover_url'),tags=[], figures = [],views = [], num_of_view = 0)
-        #new_stream = stream(name = 'test', owner = user.user_id(), cover_url = 'test_url',tags=[], figures = [])
 
         subscribers = parseSubscriber(self.request.get('subscriber'))  # TODO: parser of subscriber emails
         for to_addr in subscribers:
@@ -188,11 +187,55 @@ class TrendReportHandler(webapp2.RequestHandler):
     def get(self, freq):
         subscriber_list = trend_subscribers.query(trend_subscribers.report_freq == int(freq))
         print "trend sending"
-        for s in subscriber_list:
-            cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
-            cmail.to = s.user_email
-            cmail.body = "Periodically trending msg tester."
-            cmail.send()
+        #TODO: complement the msg content
+
+        stream_list = stream.query().order(-stream.num_of_view).fetch(3)
+
+        if (len(stream_list) == 3):
+
+            for s in subscriber_list:
+                cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
+                cmail.to = s.user_email
+                cmail.body = """ Hello, following is your connexus digest. The top 3 most popular stream are:
+                %(name1)s, %(name2)s, %(name3)s. To check the detail please click thru the following link:
+                %(trending_url)s
+                """ % {'name1':stream_list[0].name,
+                       'name2':stream_list[1].name,
+                       'name3':stream_list[2].name,
+                       'trending_url':'http://just-plate-107116.appspot.com/stream_trending'}
+                cmail.send()
+
+        elif (len(stream_list) == 2):
+             for s in subscriber_list:
+                cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
+                cmail.to = s.user_email
+                cmail.body = """ Hello, following is your connexus digest. The top 2 most popular stream are:
+                %(name1)s, %(name2)s. To check the detail please click thru the following link:
+                %(trending_url)s
+                """ % {'name1':stream_list[0].name,
+                       'name2':stream_list[1].name,
+                       'trending_url':'http://just-plate-107116.appspot.com/stream_trending'}
+                cmail.send()
+
+        elif (len(stream_list) == 1):
+             for s in subscriber_list:
+                cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
+                cmail.to = s.user_email
+                cmail.body = """ Hello, following is your connexus digest. The top 1 most popular stream are:
+                %(name1)s. To check the detail please click thru the following link:
+                %(trending_url)s
+                """ % {'name1':stream_list[0].name,
+                       'trending_url':'http://just-plate-107116.appspot.com/stream_trending'}
+                cmail.send()
+        else:
+            for s in subscriber_list:
+                cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
+                cmail.to = s.user_email
+                cmail.body = """ Hello, following is your connexus digest. Sorry at this time we do not have any stream.
+                 To check the detail please click thru the following link:
+                %(trending_url)s
+                """ % {'trending_url':'http://just-plate-107116.appspot.com/stream_trending'}
+                cmail.send()
 
 
 class TrendingFrequencyHandler(webapp2.RequestHandler):

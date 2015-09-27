@@ -96,10 +96,18 @@ class TstreamHandler(webapp2.RequestHandler):
         all_stream = stream.query()
         for s in all_stream:
             #clear stale views
-            break
-        stream_list = stream.query().order(-stream.num_of_view)
-        #TODO: adding report request, with a form indicating preference of sending frequency
-        #TODO: first refresh all the viewing records
+            i = 0
+            while i<len(s.views):
+                print(i)
+                if datetime.now()-s.views[i].date > timedelta(hours = 1):
+
+                    s.views.remove(s.views[i])
+                else:
+                    break
+
+            s.put()
+        stream_list = stream.query().order(-stream.num_of_view).fetch(3)
+
         template_values = {'String1': "This is the trending page",
                            'stream_list': stream_list,
                            'logout_url': users.create_logout_url("/")}
