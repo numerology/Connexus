@@ -3,14 +3,39 @@
 <html>
 	<link href="//bootswatch.com/darkly/bootstrap.min.css" rel="stylesheet">
 	<body>
+		<div class="navbar-header">
+          <a href="/management" class="navbar-brand">Connexus</a>
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+		<div class="navbar-collapse collapse" id="navbar-main">
+          <ul class="nav navbar-nav">
+            <li>
+              <a href="/management">Management</a>
+            </li>
+            <li>
+              <a href="/stream_list">View All Streams</a>
+            </li>
+			<li>
+              <a href="/stream_trending">Trending</a>
+            </li>
+		  </ul>
+
+          <ul class="nav navbar-nav navbar-right">
+            <li><a class="btn btn-primary" href="{{logout_url}}"> Logout</a></li>
+          </ul>
+        </div>
+		<div class = "row">
 		<div class="col-lg-8 col-md-7 col-sm-6">
             <h1>Welcome to Connexus</h1>
             <p class="lead">List of all streams</p>
-			<p>
-				<a class="btn btn-primary btn-lg" href="{{logout_url}}"> Logout</a>
-			</p>
-		</div>
 
+		</div>
+		</div>
+		<div class = "row" align = "middle">
 				{% for stream in stream_list %}
 				<a href = "/view/{{stream.key.id()}}" class = thumbnail href = "/view/{{stream.key.id()}}">
 				<img src = "{{stream.cover_url}}" alt="{{stream.name}}">
@@ -19,7 +44,7 @@
 					</div>
 				</a>
 				{% endfor %}
-
+		</div>
 
 	</body>
 </html>
