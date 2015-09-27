@@ -20,9 +20,15 @@
 			</a>
 		</div>
 		<div class = "col-lg-8 col-md-7 col-sm-6">
+		    {% if show_subscribe_button%}
 			<form class = "form-horizontal" action = "/subscribe/{{stream.key.id()}}" method = "post"> <!Subscribe call the method in SubscribeHandler>
 				<p><input class = "btn btn-primary" type = "submit" value = "Subscribe"></p>
 			</form>
+			{% else %}
+			<p>
+			    {{no_subscribe_message}}
+			</p>
+			{% endif %}
 			<p>
 				<a class="btn btn-primary" href="{{return_url}}">Return</a>
 			</p>

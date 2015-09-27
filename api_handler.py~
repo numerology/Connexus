@@ -28,7 +28,8 @@ INVITATION_EMAIL_PLAIN_TEXT = """
 Please go to this url: %(subscribe_stream_url)s
 """
 
-WEB_URL = 'connexus-yw.appspot.com'  # TODO: Change this url to the online application
+#WEB_URL = 'connexus-yw.appspot.com'  # TODO: Change this url to the online application
+WEB_URL = '/'
 DEFAULT_RETURN_URL = '/management'  # Default return url for subscribe
 
 # in this api handler, define the services for:
@@ -53,6 +54,7 @@ class stream(ndb.Model):
     cover_url = ndb.StringProperty()
     #YW: add property to record subscribers
     subscribers = ndb.UserProperty(repeated=True)
+    tags = ndb.StringProperty(repeated=True)
     #TODO: the num_of_view should be calculated by a queue, if a view is outdated, it should be removed
     num_of_view = ndb.IntegerProperty()
 
@@ -82,8 +84,15 @@ class ViewStreamHandler(webapp2.RequestHandler):
       #  nviews = Num_Of_Views[id]
         for img in current_stream.figures:
             PhotoUrls.append(images.get_serving_url(img.blob_key))
+            
+         # TODO: Check user in this page?
+      #  Add subscribe button
+        """No message if user is """  
+        
 
-        template_values = {'String1': current_stream.name, 'url_list': PhotoUrls, 'nviews':current_stream.num_of_view}
+        template_values = {'String1': current_stream.name, 
+                           'url_list': PhotoUrls, 
+                           'nviews':current_stream.num_of_view}
         template = JINJA_ENVIRONMENT.get_template('view_stream.html')
         self.response.write(template.render(template_values))
 
@@ -117,18 +126,30 @@ class CreateStreamHandler(webapp2.RequestHandler):
         user = users.get_current_user()
 
         if user is None:
+            print 'No user'
             self.redirect("/error")
-        stream_name = self.request.get("name") #TODO: check whether name is not use
-        same_name_streams = stream.query(stream.name == stream_name)
-        if same_name_streams:
+            return
+        stream_name = self.request.get('name') #TODO: check whether name is not use
+        if (not stream_name):
+        # empty stream_name should not be allowed
+            print('Stream name empty!')
             self.redirect('/error')
+            return
+        
+        same_name_streams = stream.query(stream.name == stream_name).get()
+        if (same_name_streams is not None):
+            print 'Name existing, go to error page'
+            self.redirect('/error')
+            return
+        
         owner = user.user_id()
         
+        parsed_tags = parseTag(self.request.get('tag'))
         new_stream = stream(name=self.request.get('name'), owner = user.user_id(),
-                            cover_url=self.request.get('cover_url'), tags=[], figures=[])
+                            cover_url=self.request.get('cover_url'), tags=parsed_tags, figures=[], num_of_view = 0)
         # new_stream = stream(name = 'test', owner = user.user_id(), cover_url = 'test_url',tags=[], figures = [])
         new_stream.put()
-
+        
         subscribers = parseSubscriber(self.request.get('subscriber'))  # TODO: parser of subscriber emails
         for to_addr in subscribers:
             print to_addr
@@ -138,6 +159,8 @@ class CreateStreamHandler(webapp2.RequestHandler):
         invitation_email.subject = """Invitation to %(stream_name)s on Connexus from %(Invitor)s""" \
                           % {"stream_name": stream_name, "Invitor": user.nickname()}
         url_to_subscribe = (WEB_URL + '/subscribe/%s' % new_stream.key.id())
+        # Print url to subscribe
+        print url_to_subscribe
         template_values = {'stream_name': stream_name,
                            'subscribe_message': subscribe_message,
                            'subscribe_stream_url': url_to_subscribe}
@@ -173,6 +196,7 @@ class TrendingFrequencyHandler(webapp2.RequestHandler):
 
         if user is None:
             self.redirect("/error")
+            return
 
         subscriber_list = trend_subscribers.query()
         flag = False
@@ -208,15 +232,38 @@ class SubscribeStreamHandler(webapp2.RequestHandler):
         user = users.get_current_user()
         if user is None:
             self.redirect(users.create_login_url(self.request.uri))
+            return
         return_url = self.request.get('return_url', DEFAULT_RETURN_URL)
         # YW: default return url is /management, or return to the url specified
         queried_stream = stream.get_by_id(int(stream_id))
         if queried_stream is None: # stream not found
             self.redirect('/error')
+            return
+            
+        # YW: check whether there should be a button for subscribe
+        no_subscribe_message = "None"
+        show_subscribe_button = True
+        if user.user_id() == queried_stream.owner:
+        # The user owns the stream
+            print "User owns the stream, no need to subscribe"
+            show_subscribe_button = False
+            no_subscribe_message = "You are the owner, no need to subscribe"
+            
+        already_subscribed = False  # show Already Subscribed message instead of showing a button for subscribe
+        for temp_user in queried_stream.subscribers:  # this for loop is used to check the id of users
+            if user.user_id() == temp_user.user_id():
+                already_subscribed = True
+                break
+        if already_subscribed:
+            show_subscribe_button = False
+            no_subscribe_message = "You've already subscribed to the stream"
+            
         template = JINJA_ENVIRONMENT.get_template('subscribe_temp.html')
         template_values = {'stream': queried_stream,
                            'logout_url': users.create_logout_url(WEB_URL),
-                           'return_url': return_url}
+                           'return_url': return_url,
+                           'show_subscribe_button': show_subscribe_button,
+                           'no_subscribe_message': no_subscribe_message}
         self.response.write(template.render(template_values))
         
     def post(self, stream_id):
@@ -225,9 +272,11 @@ class SubscribeStreamHandler(webapp2.RequestHandler):
         user = users.get_current_user()
         if user is None:
             self.redirect(users.create_login_url(self.request.uri))
+            return
         queried_stream = stream.get_by_id(int(stream_id))
         if queried_stream is None:  # Subscribe to a non-existing stream
             self.redirect('error')
+            return
         already_subscribed = False
         for temp_user in queried_stream.subscribers:  # this for loop is used to check the id of users
             if user.user_id() == temp_user.user_id():
@@ -258,7 +307,11 @@ def parseSubscriber(subscriber_string):
         splitter = r'[,;\t\r\n]'
         subscribers = re.split(splitter, subscriber_string)
         return subscribers
-     
+        
+def parseTag(tag_string):
+    """Parse tags from string"""
+    tags = filter(None, re.sub('[ ,;\t\n\r]','',tag_string).split('#'))
+    return tags        
+        
 
 
->>>>>>> a45044c35e74f277801e77f8b392bf343634691c
