@@ -11,6 +11,7 @@ from google.appengine.api import mail
 import webapp2
 import jinja2
 import os
+from datetime import *
 import time
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -30,6 +31,9 @@ class image(ndb.Model):
     location = ndb.GeoPtProperty(required=True, default=ndb.GeoPt(0,0))
     blob_key = ndb.BlobKeyProperty()
 
+class view_counter(ndb.Model):
+    date = ndb.DateTimeProperty(auto_now_add = True)
+
 class stream(ndb.Model):
     name = ndb.StringProperty()
     owner = ndb.StringProperty()
@@ -37,6 +41,7 @@ class stream(ndb.Model):
     tags = ndb.StringProperty(repeated = True)
     cover_url = ndb.StringProperty()
     #TODO: the num_of_view should be calculated by a queue, if a view is outdated, it should be removed
+    views = ndb.StructuredProperty(view_counter,repeated = True)
     num_of_view = ndb.IntegerProperty()
 
 class trend_subscribers(ndb.Model):
@@ -47,14 +52,25 @@ class trend_subscribers(ndb.Model):
 
 class ViewStreamHandler(webapp2.RequestHandler):
     def get(self,id):
+        print("stream viewing")
         PhotoUrls = []
         all_stream = stream.query()
-        for siter in all_stream:
-            if str(siter.key.id()) == id:
-                current_stream = siter
+        current_stream = stream.get_by_id(int(id))
+        current_stream.num_of_view += 1
+        now_time = view_counter()
+        now_time.put()
+        current_stream.views.append(now_time)
+        cutofftime = datetime.now() - timedelta(minutes=1)
+        delete_list = [] # if directly deleting elements in views, the range of for loop will be variable, out_of_bound occurs
+        for i in range(0,len(current_stream.views)):
+            if datetime.now()-current_stream.views[i].date > timedelta(minutes = 1):
+                #for now let's say the record only keep for 1 mins
+                current_stream.views.remove(current_stream.views[i])
+            else:
                 break
 
-        current_stream.num_of_view += 1
+
+        current_stream.num_of_view = len(current_stream.views)
         current_stream.put()
 
       #  nviews = Num_Of_Views[id]
@@ -101,7 +117,7 @@ class CreateStreamHandler(webapp2.RequestHandler):
         if user is None:
             self.redirect("/error")
 
-        new_stream = stream(name = self.request.get('name'), owner = user.user_id(), cover_url = self.request.get('cover_url'),tags=[], figures = [], num_of_view = 0)
+        new_stream = stream(name = self.request.get('name'), owner = user.user_id(), cover_url = self.request.get('cover_url'),tags=[], figures = [],views = [], num_of_view = 0)
         #new_stream = stream(name = 'test', owner = user.user_id(), cover_url = 'test_url',tags=[], figures = [])
 
         new_key = new_stream.put()
