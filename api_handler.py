@@ -11,10 +11,11 @@ from google.appengine.api import mail
 import webapp2
 import jinja2
 import os
+from datetime import *
 import re  # used to parse list of emails
 from google.appengine.api import mail  # mailing functions in invitation, notification
 import logging  # Log messages
-import time
+
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -46,6 +47,10 @@ class image(ndb.Model):
     blob_key = ndb.BlobKeyProperty()
 
 
+class view_counter(ndb.Model):
+    date = ndb.DateTimeProperty(auto_now_add = True)
+
+
 class stream(ndb.Model):
     name = ndb.StringProperty()
     owner = ndb.StringProperty()
@@ -56,6 +61,7 @@ class stream(ndb.Model):
     subscribers = ndb.UserProperty(repeated=True)
     tags = ndb.StringProperty(repeated=True)
     #TODO: the num_of_view should be calculated by a queue, if a view is outdated, it should be removed
+    views = ndb.StructuredProperty(view_counter,repeated = True)
     num_of_view = ndb.IntegerProperty()
 
 
@@ -70,6 +76,7 @@ class trend_subscribers(ndb.Model):
 
 
 class ViewStreamHandler(webapp2.RequestHandler):
+
     def get(self, id):
         user = users.get_current_user()
         if user is None:
@@ -77,15 +84,29 @@ class ViewStreamHandler(webapp2.RequestHandler):
             print("View Stream Handler: Not logged in")
             self.redirect(users.create_login_page(self.request.uri))
             return
-        
+
         PhotoUrls = []
         all_stream = stream.query()
-        for siter in all_stream:
-            if str(siter.key.id()) == id:
-                current_stream = siter
+        current_stream = stream.get_by_id(int(id))
+        current_stream.num_of_view += 1
+        now_time = view_counter()
+        now_time.put()
+        current_stream.views.append(now_time)
+        print("current length of views" + str(len(current_stream.views)))
+        cutofftime = datetime.now() - timedelta(minutes=1)
+        print(len(current_stream.views))
+        delete_list = [] # if directly deleting elements in views, the range of for loop will be variable, out_of_bound occurs
+        i = 0
+        while i<len(current_stream.views):
+            print(i)
+            if datetime.now()-current_stream.views[i].date > timedelta(hours = 1):
+                #for now let's say the record only keep for 1 mins
+                current_stream.views.remove(current_stream.views[i])
+            else:
                 break
 
-        current_stream.num_of_view += 1
+
+        current_stream.num_of_view = len(current_stream.views)
         current_stream.put()
 
       #  nviews = Num_Of_Views[id]
@@ -129,11 +150,14 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
     def post(self):
        # self.redirect('/management')
         try:
+            print ("upload handler is running")
             upload = self.get_uploads()[0]
+            print ("upload handler is running")
             stream_name = self.request.get("stream_name")
             user_photo = image(owner=users.get_current_user().user_id(),
                                    blob_key=upload.key())
             user_photo.put()
+            all_stream = stream.query()
             for siter in all_stream:
                 if str(siter.name) == stream_name:
                     current_stream = siter
@@ -141,7 +165,7 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
                     print "put is being called"
                     siter.put()
                     break
-            time.sleep(1)
+          #  time.sleep(1)
           #  current_stream = stream.get_by_id(stream_id)
 
             self.redirect('/view/%s' % siter.key.id())
@@ -205,6 +229,7 @@ class CreateStreamHandler(webapp2.RequestHandler):
                 invitation_email.to = to_addr
                 invitation_email.send()
 
+
         self.redirect('/management')
 
 
@@ -212,11 +237,55 @@ class TrendReportHandler(webapp2.RequestHandler):
     def get(self, freq):
         subscriber_list = trend_subscribers.query(trend_subscribers.report_freq == int(freq))
         print "trend sending"
-        for s in subscriber_list:
-            cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
-            cmail.to = s.user_email
-            cmail.body = "Periodically trending msg tester."
-            cmail.send()
+        #TODO: complement the msg content
+
+        stream_list = stream.query().order(-stream.num_of_view).fetch(3)
+
+        if (len(stream_list) == 3):
+
+            for s in subscriber_list:
+                cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
+                cmail.to = s.user_email
+                cmail.body = """ Hello, following is your connexus digest. The top 3 most popular stream are:
+                %(name1)s, %(name2)s, %(name3)s. To check the detail please click thru the following link:
+                %(trending_url)s
+                """ % {'name1':stream_list[0].name,
+                       'name2':stream_list[1].name,
+                       'name3':stream_list[2].name,
+                       'trending_url':'http://just-plate-107116.appspot.com/stream_trending'}
+                cmail.send()
+
+        elif (len(stream_list) == 2):
+             for s in subscriber_list:
+                cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
+                cmail.to = s.user_email
+                cmail.body = """ Hello, following is your connexus digest. The top 2 most popular stream are:
+                %(name1)s, %(name2)s. To check the detail please click thru the following link:
+                %(trending_url)s
+                """ % {'name1':stream_list[0].name,
+                       'name2':stream_list[1].name,
+                       'trending_url':'http://just-plate-107116.appspot.com/stream_trending'}
+                cmail.send()
+
+        elif (len(stream_list) == 1):
+             for s in subscriber_list:
+                cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
+                cmail.to = s.user_email
+                cmail.body = """ Hello, following is your connexus digest. The top 1 most popular stream are:
+                %(name1)s. To check the detail please click thru the following link:
+                %(trending_url)s
+                """ % {'name1':stream_list[0].name,
+                       'trending_url':'http://just-plate-107116.appspot.com/stream_trending'}
+                cmail.send()
+        else:
+            for s in subscriber_list:
+                cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
+                cmail.to = s.user_email
+                cmail.body = """ Hello, following is your connexus digest. Sorry at this time we do not have any stream.
+                 To check the detail please click thru the following link:
+                %(trending_url)s
+                """ % {'trending_url':'http://just-plate-107116.appspot.com/stream_trending'}
+                cmail.send()
 
 
 class TrendingFrequencyHandler(webapp2.RequestHandler):
@@ -346,4 +415,7 @@ def parseTag(tag_string):
     return tags        
         
 
+
+class SearchHandler(webapp2.RequestHandler):
+    def post(self):
 

@@ -10,6 +10,7 @@ routes = [
   #  webapp2.Route(r'/api/stream_list', handler = ListStreamHandler, name = 'list_api'),
     webapp2.Route(r'/api/create_stream', handler = CreateStreamHandler, name = 'list_api'),
     webapp2.Route(r'/api/change_freq', handler = TrendingFrequencyHandler, name = 'change_freq_api'),
+    webapp2.Route(r'/api/stream_search', handler = SearchHandler, name = 'search_api'),
 
     webapp2.Route(r'/', handler = MainPage, name = 'mainpage'),
     webapp2.Route(r'/management', handler = ManagementHandler, name = 'management'),
