@@ -1,0 +1,12 @@
+cron:
+- description: 1 mins
+  url: /report_trend/1
+  schedule: every 1 mins
+
+- description: 2 mins
+  url: /report_trend/2
+  schedule: every 2 mins
+
+- description: 4 mins
+  url: /report_trend/4
+  schedule: every 4 mins

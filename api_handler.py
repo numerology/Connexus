@@ -7,12 +7,14 @@ from google.appengine.ext import ndb
 from google.appengine.api import users, files, images
 from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
+from google.appengine.api import mail
 import webapp2
 import jinja2
 import os
 import re  # used to parse list of emails
 from google.appengine.api import mail  # mailing functions in invitation, notification
 import logging  # Log messages
+import time
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -51,6 +53,8 @@ class stream(ndb.Model):
     cover_url = ndb.StringProperty()
     #YW: add property to record subscribers
     subscribers = ndb.UserProperty(repeated=True)
+    #TODO: the num_of_view should be calculated by a queue, if a view is outdated, it should be removed
+    num_of_view = ndb.IntegerProperty()
 
 
 class subscribe_list(ndb.Model):
@@ -58,14 +62,28 @@ class subscribe_list(ndb.Model):
     subscribed_streams = ndb.StringProperty(repeated = True)
 
 
+class trend_subscribers(ndb.Model):
+    user_email = ndb.StringProperty()
+    report_freq = ndb.IntegerProperty()
+
+
 class ViewStreamHandler(webapp2.RequestHandler):
     def get(self, id):
         PhotoUrls = []
-        current_stream = stream.get_by_id(int(id))
+        all_stream = stream.query()
+        for siter in all_stream:
+            if str(siter.key.id()) == id:
+                current_stream = siter
+                break
+
+        current_stream.num_of_view += 1
+        current_stream.put()
+
+      #  nviews = Num_Of_Views[id]
         for img in current_stream.figures:
             PhotoUrls.append(images.get_serving_url(img.blob_key))
 
-        template_values = {'String1': current_stream.name, 'url_list': PhotoUrls}
+        template_values = {'String1': current_stream.name, 'url_list': PhotoUrls, 'nviews':current_stream.num_of_view}
         template = JINJA_ENVIRONMENT.get_template('view_stream.html')
         self.response.write(template.render(template_values))
 
@@ -86,9 +104,9 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
                     print "put is being called"
                     siter.put()
                     break
-
+            time.sleep(1)
           #  current_stream = stream.get_by_id(stream_id)
-            #TODO: uploading still needs some time to complete, we need to control the speed of redirect
+
             self.redirect('/view/%s' % siter.key.id())
         except:
             self.error(500)
@@ -136,6 +154,50 @@ class CreateStreamHandler(webapp2.RequestHandler):
                 invitation_email.send()
 
         self.redirect('/management')
+
+
+class TrendReportHandler(webapp2.RequestHandler):
+    def get(self, freq):
+        subscriber_list = trend_subscribers.query(trend_subscribers.report_freq == int(freq))
+        print "trend sending"
+        for s in subscriber_list:
+            cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
+            cmail.to = s.user_email
+            cmail.body = "Periodically trending msg tester."
+            cmail.send()
+
+
+class TrendingFrequencyHandler(webapp2.RequestHandler):
+    def post(self):
+        user = users.get_current_user()
+
+        if user is None:
+            self.redirect("/error")
+
+        subscriber_list = trend_subscribers.query()
+        flag = False
+        for s in subscriber_list:
+            if s.user_email == str(user.email()):
+                try:
+                    s.report_freq = int(self.request.get("frequency"))
+                    s.put()
+                except:
+                    s.report_freq = 0
+                    s.put()
+                flag = True
+                cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
+                cmail.to = s.user_email
+                cmail.body = "You have changed your updating preference."
+                cmail.send()
+                break
+        if(not flag):
+            try:
+                new_subscriber = trend_subscribers(user_email = user.email(), report_freq = int(self.request.get("frequency")))
+            except:
+                new_subscriber = trend_subscribers(user_email = user.email(), report_freq = 0)
+            new_subscriber.put()
+
+        self.redirect("/stream_trending")
 
 
 class SubscribeStreamHandler(webapp2.RequestHandler):
@@ -196,5 +258,5 @@ def parseSubscriber(subscriber_string):
         splitter = r'[,;\t\r\n]'
         subscribers = re.split(splitter, subscriber_string)
         return subscribers
-     
+
 
