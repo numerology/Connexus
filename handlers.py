@@ -1,6 +1,7 @@
 from google.appengine.api import users, files, images
 from google.appengine.ext import blobstore
 import webapp2
+import operator
 from api_handler import *
 from google.appengine.ext import ndb
 
@@ -12,6 +13,8 @@ JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
     extensions=['jinja2.ext.autoescape'],
     autoescape=True)
+
+
 
 
 class MainPage(webapp2.RequestHandler):
@@ -30,6 +33,10 @@ class MainPage(webapp2.RequestHandler):
 
 class ManagementHandler(webapp2.RequestHandler):
     def get(self):
+        user = users.get_current_user()
+        if user is None:
+            self.redirect("/error")
+        #TODO: find the streams created by user, and streams subscribe to 
         template_values = {'String1': "This is the management page",
                            'logout_url': users.create_logout_url("/"),
                            'create_url': "/stream_create",
@@ -84,10 +91,19 @@ class SstreamHandler(webapp2.RequestHandler):
         self.response.write(template.render(template_values))
 
 class TstreamHandler(webapp2.RequestHandler):
+    #trending handler
     def get(self):
+        all_stream = stream.query()
+        for s in all_stream:
+            #clear stale views
+            break
+        stream_list = stream.query().order(-stream.num_of_view)
+        #TODO: adding report request, with a form indicating preference of sending frequency
+        #TODO: first refresh all the viewing records
         template_values = {'String1': "This is the trending page",
+                           'stream_list': stream_list,
                            'logout_url': users.create_logout_url("/")}
-        template = JINJA_ENVIRONMENT.get_template('temp_subpage.html')
+        template = JINJA_ENVIRONMENT.get_template('temp_trending.html')
         self.response.write(template.render(template_values))
 
 class ErrorHandler(webapp2.RequestHandler):
