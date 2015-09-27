@@ -93,9 +93,13 @@ class SstreamHandler(webapp2.RequestHandler):
 class TstreamHandler(webapp2.RequestHandler):
     #trending handler
     def get(self):
+        all_stream = stream.query()
+        for s in all_stream:
+            #clear stale views
+            break
         stream_list = stream.query().order(-stream.num_of_view)
         #TODO: adding report request, with a form indicating preference of sending frequency
-
+        #TODO: first refresh all the viewing records
         template_values = {'String1': "This is the trending page",
                            'stream_list': stream_list,
                            'logout_url': users.create_logout_url("/")}

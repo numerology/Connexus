@@ -76,6 +76,7 @@ class trend_subscribers(ndb.Model):
 class ViewStreamHandler(webapp2.RequestHandler):
 
     def get(self, id):
+
         PhotoUrls = []
         all_stream = stream.query()
         current_stream = stream.get_by_id(int(id))
@@ -83,10 +84,14 @@ class ViewStreamHandler(webapp2.RequestHandler):
         now_time = view_counter()
         now_time.put()
         current_stream.views.append(now_time)
+        print("current length of views" + str(len(current_stream.views)))
         cutofftime = datetime.now() - timedelta(minutes=1)
+        print(len(current_stream.views))
         delete_list = [] # if directly deleting elements in views, the range of for loop will be variable, out_of_bound occurs
-        for i in range(0,len(current_stream.views)):
-            if datetime.now()-current_stream.views[i].date > timedelta(minutes = 1):
+        i = 0
+        while i<len(current_stream.views):
+            print(i)
+            if datetime.now()-current_stream.views[i].date > timedelta(hours = 1):
                 #for now let's say the record only keep for 1 mins
                 current_stream.views.remove(current_stream.views[i])
             else:
