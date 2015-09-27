@@ -23,6 +23,7 @@
 		    {% if show_subscribe_button%}
 			<form class = "form-horizontal" action = "/subscribe/{{stream.key.id()}}" method = "post"> <!Subscribe call the method in SubscribeHandler>
 				<p><input class = "btn btn-primary" type = "submit" value = "Subscribe"></p>
+				<input type="hidden" name="return_url" value={{subscribe_return_url}}>
 			</form>
 			{% else %}
 			<p>

@@ -71,6 +71,13 @@ class trend_subscribers(ndb.Model):
 
 class ViewStreamHandler(webapp2.RequestHandler):
     def get(self, id):
+        user = users.get_current_user()
+        if user is None:
+        # go to login page
+            print("View Stream Handler: Not logged in")
+            self.redirect(users.create_login_page(self.request.uri))
+            return
+        
         PhotoUrls = []
         all_stream = stream.query()
         for siter in all_stream:
@@ -87,12 +94,32 @@ class ViewStreamHandler(webapp2.RequestHandler):
             
          # TODO: Check user in this page?
       #  Add subscribe button
-        """No message if user is owner; show message if already subscribed; show button if not subscribed"""  
+        """show message if owner or already subscribed; show button if not subscribed"""
+        no_subscribe_message = "None"
+        show_subscribe_button = True
+        subscribe_return_url = self.request.uri
+        if user.user_id() == current_stream.owner:
+        # The user owns the stream
+            print "View Stream Handler: User owns the stream, no need to subscribe"
+            show_subscribe_button = False
+            no_subscribe_message = "You are the owner of the Stream"
+            
+        already_subscribed = False  # show Already Subscribed message instead of showing a button for subscribe
+        for temp_user in current_stream.subscribers:  # this for loop is used to check the id of users
+            if user.user_id() == temp_user.user_id():
+                already_subscribed = True
+                break
+        if already_subscribed:
+            show_subscribe_button = False
+            no_subscribe_message = "You've already subscribed to the stream" 
         
-
         template_values = {'String1': current_stream.name, 
                            'url_list': PhotoUrls, 
-                           'nviews':current_stream.num_of_view}
+                           'nviews':current_stream.num_of_view,
+                           'stream': current_stream,
+                           'no_subscribe_message': no_subscribe_message,
+                           'show_subscribe_button': show_subscribe_button,
+                           'subscribe_return_url': subscribe_return_url}
         template = JINJA_ENVIRONMENT.get_template('view_stream.html')
         self.response.write(template.render(template_values))
 
@@ -150,10 +177,10 @@ class CreateStreamHandler(webapp2.RequestHandler):
         # new_stream = stream(name = 'test', owner = user.user_id(), cover_url = 'test_url',tags=[], figures = [])
         new_stream.put()
         
-        subscribers = parseSubscriber(self.request.get('subscriber'))  # TODO: parser of subscriber emails
+        subscribers = parseSubscriber(self.request.get('subscriber'))
         for to_addr in subscribers:
             print to_addr
-        subscribe_message = self.request.get('subscribe_message')  # TODO: send emails to subscribers
+        subscribe_message = self.request.get('subscribe_message')
         invitation_email = mail.EmailMessage()
         invitation_email.sender = user.email()  # YW:sender is the creator of the stream
         invitation_email.subject = """Invitation to %(stream_name)s on Connexus from %(Invitor)s""" \
@@ -165,6 +192,7 @@ class CreateStreamHandler(webapp2.RequestHandler):
                            'subscribe_message': subscribe_message,
                            'subscribe_stream_url': url_to_subscribe}
         template = JINJA_ENVIRONMENT.get_template('subscribe_invitation_email.html')
+        
         invitation_email.body = (INVITATION_EMAIL_PLAIN_TEXT % {'user': new_stream.owner,
                                                                 'stream_name': new_stream.name,
                                                                 'message': subscribe_message,
@@ -270,6 +298,7 @@ class SubscribeStreamHandler(webapp2.RequestHandler):
         """Subscribe to the stream: 1.add stream to user's stream set; 2.add user to stream's subscriber list;
         3. redirect to manage page"""
         user = users.get_current_user()
+        return_url = self.request.get('return_url','/')
         if user is None:
             self.redirect(users.create_login_url(self.request.uri))
             return
@@ -294,7 +323,7 @@ class SubscribeStreamHandler(webapp2.RequestHandler):
         queried_subscribe_list.subscribed_streams.append(queried_stream.name)
         queried_subscribe_list.put()
 
-        self.redirect('/management')
+        self.redirect(return_url)
 
 
 # Helper functions
