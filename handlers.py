@@ -33,6 +33,10 @@ class MainPage(webapp2.RequestHandler):
 
 class ManagementHandler(webapp2.RequestHandler):
     def get(self):
+        user = users.get_current_user()
+        if user is None:
+            self.redirect("/error")
+        #TODO: find the streams created by user, and streams subscribe to 
         template_values = {'String1': "This is the management page",
                            'logout_url': users.create_logout_url("/"),
                            'create_url': "/stream_create",

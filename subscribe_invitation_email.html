@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+    <body>
+        I'm inviting you to subsribe my stream {{stream_name}} on Connexus!
+        {% if subscribe_message != None %}
+        <p>{{subscribe_message}}</p>
+        {% endif %}
+        <p>
+            <a href = "{{subscribe_stream_url}}">Click the link to {{stream_name}}</a>
+        </p>
+    </body>
+</html>
+{% endautoescape%}

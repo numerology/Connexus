@@ -11,11 +11,10 @@ from google.appengine.api import mail
 import webapp2
 import jinja2
 import os
-from datetime import *
 import re  # used to parse list of emails
 from google.appengine.api import mail  # mailing functions in invitation, notification
 import logging  # Log messages
-
+import time
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -46,10 +45,6 @@ class image(ndb.Model):
     blob_key = ndb.BlobKeyProperty()
 
 
-class view_counter(ndb.Model):
-    date = ndb.DateTimeProperty(auto_now_add = True)
-
-
 class stream(ndb.Model):
     name = ndb.StringProperty()
     owner = ndb.StringProperty()
@@ -59,7 +54,6 @@ class stream(ndb.Model):
     #YW: add property to record subscribers
     subscribers = ndb.UserProperty(repeated=True)
     #TODO: the num_of_view should be calculated by a queue, if a view is outdated, it should be removed
-    views = ndb.StructuredProperty(view_counter,repeated = True)
     num_of_view = ndb.IntegerProperty()
 
 
@@ -74,26 +68,15 @@ class trend_subscribers(ndb.Model):
 
 
 class ViewStreamHandler(webapp2.RequestHandler):
-
     def get(self, id):
         PhotoUrls = []
         all_stream = stream.query()
-        current_stream = stream.get_by_id(int(id))
-        current_stream.num_of_view += 1
-        now_time = view_counter()
-        now_time.put()
-        current_stream.views.append(now_time)
-        cutofftime = datetime.now() - timedelta(minutes=1)
-        delete_list = [] # if directly deleting elements in views, the range of for loop will be variable, out_of_bound occurs
-        for i in range(0,len(current_stream.views)):
-            if datetime.now()-current_stream.views[i].date > timedelta(minutes = 1):
-                #for now let's say the record only keep for 1 mins
-                current_stream.views.remove(current_stream.views[i])
-            else:
+        for siter in all_stream:
+            if str(siter.key.id()) == id:
+                current_stream = siter
                 break
 
-
-        current_stream.num_of_view = len(current_stream.views)
+        current_stream.num_of_view += 1
         current_stream.put()
 
       #  nviews = Num_Of_Views[id]
@@ -114,7 +97,6 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             user_photo = image(owner=users.get_current_user().user_id(),
                                    blob_key=upload.key())
             user_photo.put()
-            all_stream = stream.query()
             for siter in all_stream:
                 if str(siter.name) == stream_name:
                     current_stream = siter
@@ -147,10 +129,6 @@ class CreateStreamHandler(webapp2.RequestHandler):
         # new_stream = stream(name = 'test', owner = user.user_id(), cover_url = 'test_url',tags=[], figures = [])
         new_stream.put()
 
-
-        new_stream = stream(name = self.request.get('name'), owner = user.user_id(), cover_url = self.request.get('cover_url'),tags=[], figures = [],views = [], num_of_view = 0)
-        #new_stream = stream(name = 'test', owner = user.user_id(), cover_url = 'test_url',tags=[], figures = [])
-
         subscribers = parseSubscriber(self.request.get('subscriber'))  # TODO: parser of subscriber emails
         for to_addr in subscribers:
             print to_addr
@@ -174,7 +152,6 @@ class CreateStreamHandler(webapp2.RequestHandler):
             if mail.is_email_valid(to_addr):
                 invitation_email.to = to_addr
                 invitation_email.send()
-
 
         self.redirect('/management')
 
@@ -281,5 +258,7 @@ def parseSubscriber(subscriber_string):
         splitter = r'[,;\t\r\n]'
         subscribers = re.split(splitter, subscriber_string)
         return subscribers
+     
 
 
+>>>>>>> a45044c35e74f277801e77f8b392bf343634691c
