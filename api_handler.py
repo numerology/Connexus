@@ -12,7 +12,7 @@ import webapp2
 import jinja2
 import os
 from datetime import *
-from time import *
+import time
 import re  # used to parse list of emails
 from google.appengine.api import mail  # mailing functions in invitation, notification
 import logging  # Log messages
@@ -89,11 +89,12 @@ class ViewStreamHandler(webapp2.RequestHandler):
         PhotoUrls = []
         all_stream = stream.query()
         current_stream = stream.get_by_id(int(id))
-        if not user.user_id() == current_stream.owner:
-            current_stream.num_of_view += 1
-        now_time = view_counter()
-        now_time.put()
-        current_stream.views.append(now_time)
+        if not str(user.user_id()) == current_stream.owner:
+
+            now_time = view_counter()
+            now_time.put()
+            current_stream.views.append(now_time)
+
         print("View Stream Handler: current length of views" + str(len(current_stream.views)))
         cutofftime = datetime.now() - timedelta(minutes=1)
         print(len(current_stream.views))
@@ -163,8 +164,12 @@ class DeleteStreamHandler(webapp2.RequestHandler):
 
         current_stream = stream.get_by_id(int(id))
         if current_stream:
+            #delete all the imgs, because they are huge
+            for i in current_stream.figures:
+                blobstore.delete(i.blob_key)
             current_stream.key.delete()
 
+        time.sleep(0.3)
         self.redirect('/management')
         return
 
