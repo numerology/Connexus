@@ -30,8 +30,8 @@ INVITATION_EMAIL_PLAIN_TEXT = """
 Please go to this url: %(subscribe_stream_url)s
 """
 
-WEB_URL = 'connexus-yw.appspot.com'  # TODO: Change this url to the online application
-#WEB_URL = '/'
+#WEB_URL = 'connexus-yw.appspot.com'  # TODO: Change this url to the online application
+WEB_URL = 'http://just-plate-107116.appspot.com/'
 DEFAULT_RETURN_URL = '/management'  # Default return url for subscribe
 
 
@@ -61,10 +61,12 @@ class stream(ndb.Model):
     cover_url = ndb.StringProperty()
     #YW: add property to record subscribers
     subscribers = ndb.UserProperty(repeated=True)
-    tags = ndb.StringProperty(repeated=True)
+
     #TODO: the num_of_view should be calculated by a queue, if a view is outdated, it should be removed
     views = ndb.StructuredProperty(view_counter,repeated = True)
     num_of_view = ndb.IntegerProperty()
+    num_of_pics = ndb.IntegerProperty()
+    last_modified = ndb.StringProperty()
 
 
 class subscribe_list(ndb.Model):
@@ -189,8 +191,11 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             all_stream = stream.query()
             for siter in all_stream:
                 if str(siter.name) == stream_name:
-                    current_stream = siter
+
                     siter.figures.append(user_photo)
+                    siter.num_of_pics = len(siter.figures)
+                    dt = datetime.now()
+                    siter.last_modified = str(dt.replace(microsecond = (dt.microsecond / 1000000) * 1000000))[:-3]
                     print "PhotoUploadHandler: put is being called"
                     siter.put()
                     break
@@ -391,6 +396,7 @@ class SubscribeStreamHandler(webapp2.RequestHandler):
         if already_subscribed:
             show_subscribe_button = False
             no_subscribe_message = "You've already subscribed to the stream"
+
             
         template = JINJA_ENVIRONMENT.get_template('subscribe_temp.html')
         template_values = {'stream': queried_stream,

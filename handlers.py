@@ -40,6 +40,13 @@ class ManagementHandler(webapp2.RequestHandler):
         #TODO: find the streams created by user, and streams subscribe to
 
         stream_owned = stream.query(stream.owner ==str(user.user_id()))
+
+        all_stream = stream.query()
+        stream_subscribed = []
+        for s in all_stream:
+            if user in s.subscribers:
+                stream_subscribed.append(s)
+
         template_values = {'String1': "This is the management page",
                            'logout_url': users.create_logout_url("/"),
                            'create_url': "/stream_create",
@@ -48,7 +55,8 @@ class ManagementHandler(webapp2.RequestHandler):
                            'trending_url': "/stream_trending",
                            'list_url':"/stream_list",
                            'upload_url':"/upload_fig",
-                           'stream_owned': stream_owned
+                           'stream_owned': stream_owned,
+                           'stream_subscribed':stream_subscribed
                            }
         template = JINJA_ENVIRONMENT.get_template('manage_temp.html')
         self.response.write(template.render(template_values))
