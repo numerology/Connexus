@@ -23,7 +23,12 @@
               <a href="/stream_trending">Trending</a>
             </li>
 		  </ul>
-
+		  <form class="navbar-form navbar-left" action="/stream_search"  method="get">
+        	<div class="form-group" align = "left">
+				<label for = "search" class = "col-lg-5 control-label">Search</label>
+          		<input type="text" class="form-control" name="search_keywords" autocomplete="off">
+        	</div>
+		  </form>
           <ul class="nav navbar-nav navbar-right">
             <li><a class="btn btn-primary" href="{{logout_url}}"> Logout</a></li>
           </ul>
@@ -58,13 +63,13 @@
 						<legend>Trending notification options</legend>
 						<div class = "form-group">
 							<br>
-							<label for="select" class = "col-lg-5 control-label">Notification frequency (mins)</label>
+							<label for="select" class = "col-lg-5 control-label">Notification frequency</label>
 							<div class="col-lg-5">
 								<select class="form-control" name = "frequency">
 									<option>none</option>
-									<option>1</option>
-									<option>2</option>
-									<option>4</option>
+									<option>5 mins</option>
+									<option>1 hour</option>
+									<option>everyday</option>
 								</select>
 							</div>
 						</div>

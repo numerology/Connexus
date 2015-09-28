@@ -72,7 +72,7 @@ class subscribe_list(ndb.Model):
 
 class trend_subscribers(ndb.Model):
     user_email = ndb.StringProperty()
-    report_freq = ndb.IntegerProperty()
+    report_freq = ndb.StringProperty()
 
 
 class ViewStreamHandler(webapp2.RequestHandler):
@@ -88,7 +88,8 @@ class ViewStreamHandler(webapp2.RequestHandler):
         PhotoUrls = []
         all_stream = stream.query()
         current_stream = stream.get_by_id(int(id))
-        current_stream.num_of_view += 1
+        if not user.user_id() == current_stream.owner:
+            current_stream.num_of_view += 1
         now_time = view_counter()
         now_time.put()
         current_stream.views.append(now_time)
@@ -119,12 +120,14 @@ class ViewStreamHandler(webapp2.RequestHandler):
         no_subscribe_message = "None"
         show_subscribe_button = True
         subscribe_return_url = self.request.uri
+        show_upload = False
+        upload_url = blobstore.create_upload_url('/upload_photo')
         if user.user_id() == current_stream.owner:
         # The user owns the stream
             print "ViewStreamHandler: User owns the stream, no need to subscribe"
             show_subscribe_button = False
             no_subscribe_message = "You are the owner of the Stream"
-            
+            show_upload = True
         already_subscribed = False  # show Already Subscribed message instead of showing a button for subscribe
         for temp_user in current_stream.subscribers:  # this for loop is used to check the id of users
             if user.user_id() == temp_user.user_id():
@@ -141,6 +144,8 @@ class ViewStreamHandler(webapp2.RequestHandler):
                            'logout_url': users.create_logout_url('/'),
                            'no_subscribe_message': no_subscribe_message,
                            'show_subscribe_button': show_subscribe_button,
+                           'show_upload': show_upload,
+                           'upload_url':upload_url,
                            'subscribe_return_url': subscribe_return_url}
         template = JINJA_ENVIRONMENT.get_template('view_stream.html')
         self.response.write(template.render(template_values))
@@ -236,9 +241,14 @@ class CreateStreamHandler(webapp2.RequestHandler):
 
 class TrendReportHandler(webapp2.RequestHandler):
     def get(self, freq):
-        subscriber_list = trend_subscribers.query(trend_subscribers.report_freq == int(freq))
+        if int(freq) == 1:
+            subscriber_list = trend_subscribers.query(trend_subscribers.report_freq == '5 mins')
+        elif int(freq) == 2:
+            subscriber_list = trend_subscribers.query(trend_subscribers.report_freq == '1 hour')
+        elif int(freq) == 4:
+            subscriber_list = trend_subscribers.query(trend_subscribers.report_freq == 'everyday')
+        else: subscriber_list = []
         print "TrendReportHandler: trend sending"
-        #TODO: complement the msg content
 
         stream_list = stream.query().order(-stream.num_of_view).fetch(3)
 
@@ -302,24 +312,24 @@ class TrendingFrequencyHandler(webapp2.RequestHandler):
         for s in subscriber_list:
             if s.user_email == str(user.email()):
                 try:
-                    s.report_freq = int(self.request.get("frequency"))
+                    s.report_freq = (self.request.get("frequency"))
                     s.put()
                 except:
-                    s.report_freq = 0
+                    s.report_freq = '0'
                     s.put()
                 flag = True
-                cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
-                cmail.to = s.user_email
-                cmail.body = "You have changed your updating preference."
-                cmail.send()
                 break
         if(not flag):
             try:
-                new_subscriber = trend_subscribers(user_email = user.email(), report_freq = int(self.request.get("frequency")))
+                new_subscriber = trend_subscribers(user_email = user.email(), report_freq = (self.request.get("frequency")))
             except:
-                new_subscriber = trend_subscribers(user_email = user.email(), report_freq = 0)
+                new_subscriber = trend_subscribers(user_email = user.email(), report_freq = '0')
             new_subscriber.put()
 
+        cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest: trending frequency changed")
+        cmail.to = user.email()
+        cmail.body = "You have changed your updating preference."
+        cmail.send()
         self.redirect("/stream_trending")
 
 
