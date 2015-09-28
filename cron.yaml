@@ -1,7 +1,7 @@
 cron:
 - description: 5 mins
   url: /report_trend/1
-  schedule: every 1 mins
+  schedule: every 5 mins
 
 - description: 1 hour
   url: /report_trend/2
