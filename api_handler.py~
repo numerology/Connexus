@@ -29,8 +29,8 @@ INVITATION_EMAIL_PLAIN_TEXT = """
 Please go to this url: %(subscribe_stream_url)s
 """
 
-#WEB_URL = 'connexus-yw.appspot.com'  # TODO: Change this url to the online application
-WEB_URL = '/'
+WEB_URL = 'connexus-yw.appspot.com'  # TODO: Change this url to the online application
+#WEB_URL = '/'
 DEFAULT_RETURN_URL = '/management'  # Default return url for subscribe
 
 # in this api handler, define the services for:
@@ -78,17 +78,13 @@ class trend_subscribers(ndb.Model):
 class ViewStreamHandler(webapp2.RequestHandler):
 
     def get(self, id):
-<<<<<<< HEAD
         user = users.get_current_user()
         if user is None:
         # go to login page
             print("View Stream Handler: Not logged in")
             self.redirect(users.create_login_page(self.request.uri))
             return
-        
-=======
 
->>>>>>> a8851acb568235237ad98cf6dfe29852ee4dd9fc
         PhotoUrls = []
         all_stream = stream.query()
         current_stream = stream.get_by_id(int(id))
@@ -96,7 +92,7 @@ class ViewStreamHandler(webapp2.RequestHandler):
         now_time = view_counter()
         now_time.put()
         current_stream.views.append(now_time)
-        print("current length of views" + str(len(current_stream.views)))
+        print("View Stream Handler: current length of views" + str(len(current_stream.views)))
         cutofftime = datetime.now() - timedelta(minutes=1)
         print(len(current_stream.views))
         delete_list = [] # if directly deleting elements in views, the range of for loop will be variable, out_of_bound occurs
@@ -125,7 +121,7 @@ class ViewStreamHandler(webapp2.RequestHandler):
         subscribe_return_url = self.request.uri
         if user.user_id() == current_stream.owner:
         # The user owns the stream
-            print "View Stream Handler: User owns the stream, no need to subscribe"
+            print "ViewStreamHandler: User owns the stream, no need to subscribe"
             show_subscribe_button = False
             no_subscribe_message = "You are the owner of the Stream"
             
@@ -154,9 +150,9 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
     def post(self):
        # self.redirect('/management')
         try:
-            print ("upload handler is running")
+            print ("PhotoUploadHandler: upload handler is running")
             upload = self.get_uploads()[0]
-            print ("upload handler is running")
+            print ("PhotoUploadHandler: upload handler is running")
             stream_name = self.request.get("stream_name")
             user_photo = image(owner=users.get_current_user().user_id(),
                                    blob_key=upload.key())
@@ -166,7 +162,7 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
                 if str(siter.name) == stream_name:
                     current_stream = siter
                     siter.figures.append(user_photo)
-                    print "put is being called"
+                    print "PhotoUploadHandler: put is being called"
                     siter.put()
                     break
           #  time.sleep(1)
@@ -182,40 +178,31 @@ class CreateStreamHandler(webapp2.RequestHandler):
         user = users.get_current_user()
 
         if user is None:
-            print 'No user'
+            print 'CreateStreamHandler: No user'
             self.redirect("/error")
             return
         stream_name = self.request.get('name') #TODO: check whether name is not use
         if (not stream_name):
         # empty stream_name should not be allowed
-            print('Stream name empty!')
+            print('CreateStreamHandler: Stream name empty!')
             self.redirect('/error')
             return
         
         same_name_streams = stream.query(stream.name == stream_name).get()
         if (same_name_streams is not None):
-            print 'Name existing, go to error page'
+            print 'CreateStreamHandler: Stream name existing, go to error page'
             self.redirect('/error')
             return
         
         owner = user.user_id()
         
-        parsed_tags = parseTag(self.request.get('tag'))
+        parsed_tags = parse_tag(self.request.get('tag'))
         new_stream = stream(name=self.request.get('name'), owner = user.user_id(),
-<<<<<<< HEAD
                             cover_url=self.request.get('cover_url'), tags=parsed_tags, figures=[], num_of_view = 0)
         # new_stream = stream(name = 'test', owner = user.user_id(), cover_url = 'test_url',tags=[], figures = [])
         new_stream.put()
         
-        subscribers = parseSubscriber(self.request.get('subscriber'))
-=======
-                            cover_url=self.request.get('cover_url'), tags=[], figures=[], num_of_view = 0)
-        # new_stream = stream(name = 'test', owner = user.user_id(), cover_url = 'test_url',tags=[], figures = [])
-        new_stream.put()
-
-
-        subscribers = parseSubscriber(self.request.get('subscriber'))  # TODO: parser of subscriber emails
->>>>>>> a8851acb568235237ad98cf6dfe29852ee4dd9fc
+        subscribers = parse_subscriber(self.request.get('subscriber'))
         for to_addr in subscribers:
             print to_addr
         subscribe_message = self.request.get('subscribe_message')
@@ -225,7 +212,7 @@ class CreateStreamHandler(webapp2.RequestHandler):
                           % {"stream_name": stream_name, "Invitor": user.nickname()}
         url_to_subscribe = (WEB_URL + '/subscribe/%s' % new_stream.key.id())
         # Print url to subscribe
-        print url_to_subscribe
+        print ("CreateStreamHandler: URL to subscribe"+url_to_subscribe)
         template_values = {'stream_name': stream_name,
                            'subscribe_message': subscribe_message,
                            'subscribe_stream_url': url_to_subscribe}
@@ -249,7 +236,7 @@ class CreateStreamHandler(webapp2.RequestHandler):
 class TrendReportHandler(webapp2.RequestHandler):
     def get(self, freq):
         subscriber_list = trend_subscribers.query(trend_subscribers.report_freq == int(freq))
-        print "trend sending"
+        print "TrendReportHandler: trend sending"
         #TODO: complement the msg content
 
         stream_list = stream.query().order(-stream.num_of_view).fetch(3)
@@ -344,8 +331,8 @@ class SubscribeStreamHandler(webapp2.RequestHandler):
         if user is None:
             self.redirect(users.create_login_url(self.request.uri))
             return
-        return_url = self.request.get('return_url', DEFAULT_RETURN_URL)
-        print ["Return URL: " + return_url]
+        return_url = str(self.request.get('return_url', DEFAULT_RETURN_URL))
+        print ("SubscribeStreamHandler: Return URL: " + return_url)
         # YW: default return url is /management, or return to the url specified
         queried_stream = stream.get_by_id(int(stream_id))
         if queried_stream is None: # stream not found
@@ -357,7 +344,7 @@ class SubscribeStreamHandler(webapp2.RequestHandler):
         show_subscribe_button = True
         if user.user_id() == queried_stream.owner:
         # The user owns the stream
-            print "User owns the stream, no need to subscribe"
+            print ("SubscribeStreamHandler: "+"User owns the stream, no need to subscribe")
             show_subscribe_button = False
             no_subscribe_message = "You are the owner, no need to subscribe"
             
@@ -372,18 +359,23 @@ class SubscribeStreamHandler(webapp2.RequestHandler):
             
         template = JINJA_ENVIRONMENT.get_template('subscribe_temp.html')
         template_values = {'stream': queried_stream,
-                           'logout_url': users.create_logout_url(WEB_URL),
+                           'logout_url': users.create_logout_url('/'),
                            'return_url': return_url,
                            'show_subscribe_button': show_subscribe_button,
                            'no_subscribe_message': no_subscribe_message}
         self.response.write(template.render(template_values))
-        
-    def post(self, stream_id):
+
+
+class ConfirmSubscribeStreamHandler(webapp2.RequestHandler):
+    """Confirm subscription to stream, only contains post method"""
+    def post(self):
         """Subscribe to the stream: 1.add stream to user's stream set; 2.add user to stream's subscriber list;
         3. redirect to manage page"""
+        #print("Enter post method")
         user = users.get_current_user()
-        return_url = self.request.get('return_url','/')
-        print ['SUBSCRIBE POST-return url: '+return_url]
+        return_url = str(self.request.get('return_url','/'))
+        stream_id = int(self.request.get('stream_id'))
+        print ('ConfirmSubscribeStreamHandler: Return Url: '+return_url)
         if user is None:
             self.redirect(users.create_login_url(self.request.uri))
             return
@@ -413,7 +405,7 @@ class SubscribeStreamHandler(webapp2.RequestHandler):
 
 # Helper functions
 # [Helper function for CreateStreamHandler]
-def parseSubscriber(subscriber_string):
+def parse_subscriber(subscriber_string):
     """This function parse the email addresses from string"""
     if subscriber_string == '':
         return []
@@ -422,13 +414,47 @@ def parseSubscriber(subscriber_string):
         subscribers = re.split(splitter, subscriber_string)
         return subscribers
         
-def parseTag(tag_string):
+def parse_tag(tag_string):
     """Parse tags from string"""
-    tags = filter(None, re.sub('[ ,;\t\n\r]','',tag_string).split('#'))
+    # tags = filter(None, re.sub('[ ,;\t\n\r]','',tag_string).split('#'))
+    tags = re.findall(r'#[A-Za-z0-9]+',tag_string)
     return tags        
-        
 
+def parse_search_keyword(key_word_string):    
+    """Parse key words for search stream"""
+    keywords = {'plain_keywords':[],
+                'tags':[]}  # YW: Can extend to contain @user search later
+    keywords['tags'] = re.findall('#[A-Za-z0-9]+', key_word_string)
+    print ('parse_search_keyword: tags: ' + " ".join(keywords['tags']))
+    original_words = filter(None, re.split(r'[,;\t\n\r\s]', key_word_string))
+    plain_keyword_reg = re.compile(r'^[A-Za-z0-9]+$')
+    # tags_reg = re.compile('^#[a-zA-Z0-9]+$')
+    for word in original_words:
+        print word
+        if plain_keyword_reg.match(word):
+            keywords['plain_keywords'].append(word)
+    print ('parse_search_keyword: plain keywords: ' + " ".join(keywords['plain_keywords']))
+    return keywords
 
 class SearchHandler(webapp2.RequestHandler):
     def post(self):
-
+        MAX_RESULT_NUM = 5
+        original_keyword_string = self.request.get('search_keywords')
+        print ('SearchHandler: original string: '+original_keyword_string)
+        keywords = parse_search_keyword(original_keyword_string)
+      # general searching:
+        queried_keywords = (keywords['plain_keywords'] + keywords['tags'])
+        queried_streams = []
+        if queried_keywords:
+            queried_streams = stream.query(ndb.OR(stream.name.IN(queried_keywords), 
+                                                  stream.tags.IN(queried_keywords))).fetch(MAX_RESULT_NUM)
+        print ('SearchHandler: set of key words: ' + "/".join(queried_keywords))
+        template_values = {'original_keyword_string': original_keyword_string,
+                           'queried_keywords': queried_keywords,
+                           'queried_streams': queried_streams}
+        template = JINJA_ENVIRONMENT.get_template('search_temp.html')
+        self.response.write(template.render(template_values))
+        
+        
+        
+   
