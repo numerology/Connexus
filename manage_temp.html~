@@ -54,38 +54,69 @@
 				<a class="btn btn-primary" href="{{list_url}}"> ViewAll</a>
 			</p>
 		</div>
-		<div class = "row" align = "middle">
+        
+		<table class="table table-striped table-hover" style="width:1000px">
+				<thead>
+				<tr>
+				{% if stream_owned.fetch()|length == 0 %} <! show message if own no stream>
+				<th colspan="3"><h1>Own no stream</h1></th>
+				{% else %}
+				<th colspan="3"><h1>Stream I own</h1></th>
+				{% endif%}
+				</tr>
+				</thead>
+
 				{% for stream in stream_owned %}
-			<div class = "col" align = "middle">
-				<a href = "/view/{{stream.key.id()}}" class = thumbnail >
-				<img src = "{{stream.cover_url}}" alt="{{stream.name}}">
-					<div class="caption" align="middle">
-						<h1>{{stream.name}}</h1>
-					</div>
-				</a>
-				<p>
-				<a class="btn btn-primary" href="/api/delete_stream/{{stream.key.id()}}">Delete</a>
-				</p>
-			</div>
+				  {% if loop.index0%3==0 %}
+				  	<tr>
+				  {% endif %}
+				  	<td>
+						<a href = "/view/{{stream.key.id()}}" class = thumbnail >
+							<img src = "{{stream.cover_url}}" alt="{{stream.name}}">
+							<div class="caption" align="middle">
+								<h3>{{stream.name}}</h3>
+							</div>
+						</a>
+						<a class="btn btn-primary btn-md" href="/api/delete_stream/{{stream.key.id()}}"> Delete</a>
+				  	</td>
+				  {% if loop.index%3==0 %}
+				  	</tr>
+				  {% endif %}
 				{% endfor %}
-		</div>
-		<div class = "row" align = "middle"> <!Subscribed Streams>
-				{% for stream in stream_subscribed %}
-			<div class = "col" align = "middle">
-				<a href = "/view/{{stream.key.id()}}" class = thumbnail >
-				<img src = "{{stream.cover_url}}" alt="{{stream.name}}">
-					<div class="caption" align="middle">
-						<h1>{{stream.name}}</h1>
-					</div>
-				</a>
-				<form class="form-horizontal" action="/api/unsubscribe_stream" method="post">
-				    <p><input class = "btn btn-primary" type="submit" value="Unsubscribe" ></input></p>
-				    <input type="hidden" name="stream_id" value="{{stream.key.id()}}"></input>
-				    <input type="hidden" name="return_url" value="{{subscribe_return_url}}"></input>
-			    </form>
-			</div>
-				{% endfor %}
-		</div>
+		</table>
+        <! table for subscribed streams>
+		<table class="table table-striped table-hover" style="width:1000px">
+		    <thead>
+			<tr>
+			{% if stream_subscribed|length == 0 %} <! show message if no stream subscribed>
+			<th colspan="3"><h1>No stream subscribed</h1></th>
+			{% else %}
+			<th colspan="3"><h1>Stream I subscribe to</h1></th>
+			{% endif%}
+			</tr>
+			</thead>
+			{% for stream in stream_subscribed %}<!Subscribed Streams>
+			    {% if loop.index0%3==0 %}
+			        <tr>
+		        {% endif %}
+		        <td>
+		            <a href = "/view/{{stream.key.id()}}" class = thumbnail >
+				        <img src = "{{stream.cover_url}}" alt="{{stream.name}}">
+					    <div class="caption" align="middle">
+						    <h3>{{stream.name}}</h3>
+					    </div>
+				    </a>
+				    <form class="form-horizontal" action="/api/unsubscribe_stream" method="post">
+				        <input class = "btn btn-primary btn-md" type="submit" value="Unsubscribe" ></input>
+				        <input type="hidden" name="stream_id" value="{{stream.key.id()}}"></input>
+				        <input type="hidden" name="return_url" value="{{unsubscribe_return_url}}"></input>
+			        </form>
+		        </td>
+		        {% if loop.index%3==0 %}
+				  	</tr>
+    			{% endif %}
+			{% endfor %}
+		</table>
 	</body>
 </html>
 {% endautoescape %}

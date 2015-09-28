@@ -56,7 +56,7 @@
 			<form class = "form-horizontal" action = "/api/unsubscribe_stream" method = "post"> <!Unsubscribe stream>
 				<p><input class = "btn btn-primary" type = "submit" value = "Unsubscribe"></p>
 				<input type="hidden" name="stream_id" value="{{stream.key.id()}}">
-				<input type="hidden" name="return_url" value={{unsubscribe_return_url}}>
+				<input type="hidden" name="return_url" value="{{unsubscribe_return_url}}">
 			</form>
 			{% else %}
 			<p>
@@ -64,6 +64,7 @@
 				{% if show_upload %}
 				<form class = "form" action = "{{upload_url}}" method = "post" enctype = "multipart/form-data">
 					<fieldset>
+<<<<<<< HEAD
 				    <legend>Adding a figure</legend>
 				    <div class = "bs-docs-section">
 					    <div class = "form-group">
@@ -81,6 +82,25 @@
 				    </div>
 				    <button type="submit" class="btn btn-primary">Upload</button>
 				    </fieldset>
+=======
+				<legend>Adding a figure</legend>
+				<div class = "bs-docs-section">
+					<div class = "form-group">
+						<label for = "file" class = "col-lg-2 control-label">File:</label>
+						<div class="col-lg-10">
+                      		<input type="file" class="form-control" name="file">
+                    	</div>
+					</div>
+					<div class = "form-group">
+						<label for = "stream_name" class = "col-lg-2 control-label">Stream name</label>
+						<div class="col-lg-10">
+                      		<input type="text" class="form-control" readonly name="stream_name" value = {{stream.name}} placeholder="Name of stream accepting this figure">
+                   		 </div>
+					</div>
+				</div>
+				<button type="submit" class="btn btn-primary">Upload</button>
+					</fieldset>
+>>>>>>> 2f526db78586d0eaffff709dd28ebe927ab30136
 				</form>
 			    {% endif %}
 			</p>

@@ -33,7 +33,7 @@ Please go to this url: %(subscribe_stream_url)s
 WEB_URL = 'connexus-yw.appspot.com'  # TODO: Change this url to the online application
 #WEB_URL = '/'
 DEFAULT_RETURN_URL = '/management'  # Default return url for subscribe
-NDB_UPDATE_SLEEP_TIME = 1
+NDB_UPDATE_SLEEP_TIME = 0.3
 
 # in this api handler, define the services for:
 # management, create stream, view a stream, image upload, view all stream, search streams, and report request
@@ -93,13 +93,14 @@ class ViewStreamHandler(webapp2.RequestHandler):
             return
 
         PhotoUrls = []
-        all_stream = stream.query()
+        # all_stream = stream.query()
         current_stream = stream.get_by_id(int(id))
-        if not user.user_id() == current_stream.owner:
-            current_stream.num_of_view += 1
-        now_time = view_counter()
-        now_time.put()
-        current_stream.views.append(now_time)
+        if not str(user.user_id()) == current_stream.owner:
+
+            now_time = view_counter()
+            now_time.put()
+            current_stream.views.append(now_time)
+
         print("View Stream Handler: current length of views" + str(len(current_stream.views)))
         cutofftime = datetime.now() - timedelta(minutes=1)
         print(len(current_stream.views))
@@ -174,6 +175,9 @@ class DeleteStreamHandler(webapp2.RequestHandler):
 
         current_stream = stream.get_by_id(int(id))
         if current_stream:
+            #delete all the imgs, because they are huge
+            for i in current_stream.figures:
+                blobstore.delete(i.blob_key)
             queried_user_profile = user_profile.query(user_profile.user_id == user.user_id()).get()
             if queried_user_profile:
                 if current_stream.name in queried_user_profile.own_streams:
@@ -200,17 +204,13 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             user_photo = image(owner=users.get_current_user().user_id(),
                                    blob_key=upload.key())
             user_photo.put()
-            all_stream = stream.query()
-            for siter in all_stream:
-                if str(siter.name) == stream_name:
-                    current_stream = siter
-                    siter.figures.append(user_photo)
-                    print "PhotoUploadHandler: put is being called"
-                    siter.put()
-                    break
-          #  time.sleep(1)
-          #  current_stream = stream.get_by_id(stream_id)
-
+            queried_stream = stream.query(stream.name == stream_name).get()
+            if queried_stream:
+                queried_stream.figures.append(user_photo)
+                print "PhotoUploadHandler: put is being called"
+                queried_stream.put()
+            else:
+                print ("PhotoUploadHander: No stream found matching "+stream_name)
             self.redirect('/view/%s' % siter.key.id())
         except:
             self.error(500)
@@ -539,7 +539,7 @@ class SearchHandler(webapp2.RequestHandler):
         self.response.write(template.render(template_values))
         
 class UnsubscribeStreamHandler(webapp2.RequestHandler):
-    def get(self):
+    def post(self):
         user = users.get_current_user()
         if user is None:
             self.redirect(users.create_login_url(self.request.uri))

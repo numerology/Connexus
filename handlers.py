@@ -39,12 +39,12 @@ class ManagementHandler(webapp2.RequestHandler):
             return
         #TODO: find the streams created by user, and streams subscribe to
 
-        stream_owned = stream.query(stream.owner == str(user.user_id()))
+        stream_owned = stream.query(stream.owner == str(user.user_id())).fetch()
         queried_user_profile = user_profile.query(user_profile.user_id == str(user.user_id())).get()
         stream_subscribed = []
         if queried_user_profile:
             if queried_user_profile.subscribed_streams:
-                stream_subscribed = stream.query(stream.name.IN(queried_user_profile.subscribed_streams))
+                stream_subscribed = stream.query(stream.name.IN(queried_user_profile.subscribed_streams)).fetch()
         unsubscribe_return_url = '/management'
         template_values = {'String1': "This is the management page",
                            'logout_url': users.create_logout_url("/"),
