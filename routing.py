@@ -18,7 +18,9 @@ routes = [
     webapp2.Route(r'/stream_create', handler = CstreamHandler, name = 'createstream'),
    # webapp2.Route(r'/stream_view', handler = VstreamHandler, name = 'viewstream'),
     webapp2.Route(r'/stream_list', handler = LstreamHandler, name = 'liststream'),
-    webapp2.Route(r'/stream_search', handler = SstreamHandler, name = 'searchstream'),
+    #YW: change handler for stream search
+    webapp2.Route(r'/stream_search', handler = SearchHandler, name = 'searchstream'),
+   # webapp2.Route(r'/stream_search', handler = SstreamHandler, name = 'searchstream'),
     webapp2.Route(r'/stream_trending', handler = TstreamHandler, name = 'trendinngstream'),
     webapp2.Route(r'/error', handler = ErrorHandler, name = 'error'),
     webapp2.Route(r'/view/<id:[\w-]+>', handler = ViewStreamHandler, name = 'viewsingle'),

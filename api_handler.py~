@@ -215,7 +215,8 @@ class CreateStreamHandler(webapp2.RequestHandler):
         print ("CreateStreamHandler: URL to subscribe"+url_to_subscribe)
         template_values = {'stream_name': stream_name,
                            'subscribe_message': subscribe_message,
-                           'subscribe_stream_url': url_to_subscribe}
+                           'subscribe_stream_url': url_to_subscribe,
+                           'logout_url': users.create_logout_url('/')}
         template = JINJA_ENVIRONMENT.get_template('subscribe_invitation_email.html')
         
         invitation_email.body = (INVITATION_EMAIL_PLAIN_TEXT % {'user': new_stream.owner,
@@ -427,7 +428,7 @@ def parse_search_keyword(key_word_string):
     keywords['tags'] = re.findall('#[A-Za-z0-9]+', key_word_string)
     print ('parse_search_keyword: tags: ' + " ".join(keywords['tags']))
     original_words = filter(None, re.split(r'[,;\t\n\r\s]', key_word_string))
-    plain_keyword_reg = re.compile(r'^[A-Za-z0-9]+$')
+    plain_keyword_reg = re.compile(r"^[A-Za-z0-9]+[A-Za-z0-9\'-]+$")  # YW: allow prime and hyphen
     # tags_reg = re.compile('^#[a-zA-Z0-9]+$')
     for word in original_words:
         print word
@@ -446,12 +447,27 @@ class SearchHandler(webapp2.RequestHandler):
         queried_keywords = (keywords['plain_keywords'] + keywords['tags'])
         queried_streams = []
         if queried_keywords:
-            queried_streams = stream.query(ndb.OR(stream.name.IN(queried_keywords), 
-                                                  stream.tags.IN(queried_keywords))).fetch(MAX_RESULT_NUM)
+            # allow to check matching part of the string
+            all_streams = stream.query()
+            for temp_stream in all_streams:
+                temp_stream_name_words = filter(None, re.split(r'[\s]',temp_stream.name))
+                print ('Splited Stream Name: ' + "/".join(temp_stream_name_words))
+                if any(name_word in temp_stream_name_words for name_word in keywords['plain_keywords']):
+                    queried_streams.append(temp_stream)
+                else:
+                    temp_stream_tags = temp_stream.tags
+                    if any(tag in temp_stream_tags for tag in keywords['tags']):
+                        queried_streams.append(temp_stream)
+                if len(queried_streams) == MAX_RESULT_NUM:
+                    break
+            
+            #queried_streams = stream.query(ndb.OR(stream.name.IN(queried_keywords), 
+            #                                      stream.tags.IN(queried_keywords))).fetch(MAX_RESULT_NUM)
         print ('SearchHandler: set of key words: ' + "/".join(queried_keywords))
         template_values = {'original_keyword_string': original_keyword_string,
                            'queried_keywords': queried_keywords,
-                           'queried_streams': queried_streams}
+                           'queried_streams': queried_streams,
+                           'logout_url': users.create_logout_url('/')}
         template = JINJA_ENVIRONMENT.get_template('search_temp.html')
         self.response.write(template.render(template_values))
         
