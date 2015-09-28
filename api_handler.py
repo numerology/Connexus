@@ -30,6 +30,7 @@ Please go to this url: %(subscribe_stream_url)s
 """
 
 WEB_URL = 'connexus-yw.appspot.com'  # TODO: Change this url to the online application
+#WEB_URL = '/'
 DEFAULT_RETURN_URL = '/management'  # Default return url for subscribe
 
 # in this api handler, define the services for:
@@ -58,6 +59,7 @@ class stream(ndb.Model):
     cover_url = ndb.StringProperty()
     #YW: add property to record subscribers
     subscribers = ndb.UserProperty(repeated=True)
+    tags = ndb.StringProperty(repeated=True)
     #TODO: the num_of_view should be calculated by a queue, if a view is outdated, it should be removed
     views = ndb.StructuredProperty(view_counter,repeated = True)
     num_of_view = ndb.IntegerProperty()
@@ -76,6 +78,12 @@ class trend_subscribers(ndb.Model):
 class ViewStreamHandler(webapp2.RequestHandler):
 
     def get(self, id):
+        user = users.get_current_user()
+        if user is None:
+        # go to login page
+            print("View Stream Handler: Not logged in")
+            self.redirect(users.create_login_page(self.request.uri))
+            return
 
         PhotoUrls = []
         all_stream = stream.query()
@@ -84,7 +92,7 @@ class ViewStreamHandler(webapp2.RequestHandler):
         now_time = view_counter()
         now_time.put()
         current_stream.views.append(now_time)
-        print("current length of views" + str(len(current_stream.views)))
+        print("View Stream Handler: current length of views" + str(len(current_stream.views)))
         cutofftime = datetime.now() - timedelta(minutes=1)
         print(len(current_stream.views))
         delete_list = [] # if directly deleting elements in views, the range of for loop will be variable, out_of_bound occurs
@@ -104,8 +112,36 @@ class ViewStreamHandler(webapp2.RequestHandler):
       #  nviews = Num_Of_Views[id]
         for img in current_stream.figures:
             PhotoUrls.append(images.get_serving_url(img.blob_key))
-
-        template_values = {'String1': current_stream.name, 'url_list': PhotoUrls, 'nviews':current_stream.num_of_view}
+            
+         # TODO: Check user in this page?
+      #  Add subscribe button
+        """show message if owner or already subscribed; show button if not subscribed"""
+        no_subscribe_message = "None"
+        show_subscribe_button = True
+        subscribe_return_url = self.request.uri
+        if user.user_id() == current_stream.owner:
+        # The user owns the stream
+            print "ViewStreamHandler: User owns the stream, no need to subscribe"
+            show_subscribe_button = False
+            no_subscribe_message = "You are the owner of the Stream"
+            
+        already_subscribed = False  # show Already Subscribed message instead of showing a button for subscribe
+        for temp_user in current_stream.subscribers:  # this for loop is used to check the id of users
+            if user.user_id() == temp_user.user_id():
+                already_subscribed = True
+                break
+        if already_subscribed:
+            show_subscribe_button = False
+            no_subscribe_message = "You've already subscribed to the stream" 
+        
+        template_values = {'String1': current_stream.name, 
+                           'url_list': PhotoUrls, 
+                           'nviews':current_stream.num_of_view,
+                           'stream': current_stream,
+                           'logout_url': users.create_logout_url('/'),
+                           'no_subscribe_message': no_subscribe_message,
+                           'show_subscribe_button': show_subscribe_button,
+                           'subscribe_return_url': subscribe_return_url}
         template = JINJA_ENVIRONMENT.get_template('view_stream.html')
         self.response.write(template.render(template_values))
 
@@ -114,9 +150,9 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
     def post(self):
        # self.redirect('/management')
         try:
-            print ("upload handler is running")
+            print ("PhotoUploadHandler: upload handler is running")
             upload = self.get_uploads()[0]
-            print ("upload handler is running")
+            print ("PhotoUploadHandler: upload handler is running")
             stream_name = self.request.get("stream_name")
             user_photo = image(owner=users.get_current_user().user_id(),
                                    blob_key=upload.key())
@@ -126,7 +162,7 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
                 if str(siter.name) == stream_name:
                     current_stream = siter
                     siter.figures.append(user_photo)
-                    print "put is being called"
+                    print "PhotoUploadHandler: put is being called"
                     siter.put()
                     break
           #  time.sleep(1)
@@ -142,32 +178,47 @@ class CreateStreamHandler(webapp2.RequestHandler):
         user = users.get_current_user()
 
         if user is None:
+            print 'CreateStreamHandler: No user'
             self.redirect("/error")
-        stream_name = self.request.get("name") #TODO: check whether name is not use
-        same_name_streams = stream.query(stream.name == stream_name)
-        if same_name_streams:
+            return
+        stream_name = self.request.get('name').strip(" ")  #TODO: check whether name is not use
+        if (not is_valid_stream_name(stream_name)):
+        # empty stream_name should not be allowed
+            print('CreateStreamHandler: Stream name not valid!')
             self.redirect('/error')
+            return
+        
+        same_name_streams = stream.query(stream.name == stream_name).get()
+        if (same_name_streams is not None):
+            print 'CreateStreamHandler: Stream name existing, go to error page'
+            self.redirect('/error')
+            return
+        
         owner = user.user_id()
         
+        parsed_tags = parse_tag(self.request.get('tag'))
         new_stream = stream(name=self.request.get('name'), owner = user.user_id(),
-                            cover_url=self.request.get('cover_url'), tags=[], figures=[], num_of_view = 0)
+                            cover_url=self.request.get('cover_url'), tags=parsed_tags, figures=[], num_of_view = 0)
         # new_stream = stream(name = 'test', owner = user.user_id(), cover_url = 'test_url',tags=[], figures = [])
         new_stream.put()
-
-
-        subscribers = parseSubscriber(self.request.get('subscriber'))  # TODO: parser of subscriber emails
+        
+        subscribers = parse_subscriber(self.request.get('subscriber'))
         for to_addr in subscribers:
             print to_addr
-        subscribe_message = self.request.get('subscribe_message')  # TODO: send emails to subscribers
+        subscribe_message = self.request.get('subscribe_message')
         invitation_email = mail.EmailMessage()
         invitation_email.sender = user.email()  # YW:sender is the creator of the stream
         invitation_email.subject = """Invitation to %(stream_name)s on Connexus from %(Invitor)s""" \
                           % {"stream_name": stream_name, "Invitor": user.nickname()}
         url_to_subscribe = (WEB_URL + '/subscribe/%s' % new_stream.key.id())
+        # Print url to subscribe
+        print ("CreateStreamHandler: URL to subscribe"+url_to_subscribe)
         template_values = {'stream_name': stream_name,
                            'subscribe_message': subscribe_message,
-                           'subscribe_stream_url': url_to_subscribe}
+                           'subscribe_stream_url': url_to_subscribe,
+                           'logout_url': users.create_logout_url('/')}
         template = JINJA_ENVIRONMENT.get_template('subscribe_invitation_email.html')
+        
         invitation_email.body = (INVITATION_EMAIL_PLAIN_TEXT % {'user': new_stream.owner,
                                                                 'stream_name': new_stream.name,
                                                                 'message': subscribe_message,
@@ -186,7 +237,7 @@ class CreateStreamHandler(webapp2.RequestHandler):
 class TrendReportHandler(webapp2.RequestHandler):
     def get(self, freq):
         subscriber_list = trend_subscribers.query(trend_subscribers.report_freq == int(freq))
-        print "trend sending"
+        print "TrendReportHandler: trend sending"
         #TODO: complement the msg content
 
         stream_list = stream.query().order(-stream.num_of_view).fetch(3)
@@ -244,6 +295,7 @@ class TrendingFrequencyHandler(webapp2.RequestHandler):
 
         if user is None:
             self.redirect("/error")
+            return
 
         subscriber_list = trend_subscribers.query()
         flag = False
@@ -279,26 +331,59 @@ class SubscribeStreamHandler(webapp2.RequestHandler):
         user = users.get_current_user()
         if user is None:
             self.redirect(users.create_login_url(self.request.uri))
-        return_url = self.request.get('return_url', DEFAULT_RETURN_URL)
+            return
+        return_url = str(self.request.get('return_url', DEFAULT_RETURN_URL))
+        print ("SubscribeStreamHandler: Return URL: " + return_url)
         # YW: default return url is /management, or return to the url specified
         queried_stream = stream.get_by_id(int(stream_id))
         if queried_stream is None: # stream not found
             self.redirect('/error')
+            return
+            
+        # YW: check whether there should be a button for subscribe
+        no_subscribe_message = "None"
+        show_subscribe_button = True
+        if user.user_id() == queried_stream.owner:
+        # The user owns the stream
+            print ("SubscribeStreamHandler: "+"User owns the stream, no need to subscribe")
+            show_subscribe_button = False
+            no_subscribe_message = "You are the owner, no need to subscribe"
+            
+        already_subscribed = False  # show Already Subscribed message instead of showing a button for subscribe
+        for temp_user in queried_stream.subscribers:  # this for loop is used to check the id of users
+            if user.user_id() == temp_user.user_id():
+                already_subscribed = True
+                break
+        if already_subscribed:
+            show_subscribe_button = False
+            no_subscribe_message = "You've already subscribed to the stream"
+            
         template = JINJA_ENVIRONMENT.get_template('subscribe_temp.html')
         template_values = {'stream': queried_stream,
-                           'logout_url': users.create_logout_url(WEB_URL),
-                           'return_url': return_url}
+                           'logout_url': users.create_logout_url('/'),
+                           'return_url': return_url,
+                           'show_subscribe_button': show_subscribe_button,
+                           'no_subscribe_message': no_subscribe_message}
         self.response.write(template.render(template_values))
-        
-    def post(self, stream_id):
+
+
+class ConfirmSubscribeStreamHandler(webapp2.RequestHandler):
+    """Confirm subscription to stream, only contains post method"""
+    def post(self):
         """Subscribe to the stream: 1.add stream to user's stream set; 2.add user to stream's subscriber list;
         3. redirect to manage page"""
+        #print("Enter post method")
         user = users.get_current_user()
+        return_url = str(self.request.get('return_url','/'))
+        stream_id = int(self.request.get('stream_id'))
+        print ('ConfirmSubscribeStreamHandler: Return Url: '+return_url)
         if user is None:
             self.redirect(users.create_login_url(self.request.uri))
+            return
         queried_stream = stream.get_by_id(int(stream_id))
         if queried_stream is None:  # Subscribe to a non-existing stream
             self.redirect('error')
+            return
         already_subscribed = False
         for temp_user in queried_stream.subscribers:  # this for loop is used to check the id of users
             if user.user_id() == temp_user.user_id():
@@ -316,12 +401,12 @@ class SubscribeStreamHandler(webapp2.RequestHandler):
         queried_subscribe_list.subscribed_streams.append(queried_stream.name)
         queried_subscribe_list.put()
 
-        self.redirect('/management')
+        self.redirect(return_url)
 
 
 # Helper functions
 # [Helper function for CreateStreamHandler]
-def parseSubscriber(subscriber_string):
+def parse_subscriber(subscriber_string):
     """This function parse the email addresses from string"""
     if subscriber_string == '':
         return []
@@ -329,8 +414,79 @@ def parseSubscriber(subscriber_string):
         splitter = r'[,;\t\r\n]'
         subscribers = re.split(splitter, subscriber_string)
         return subscribers
+        
+def parse_tag(tag_string):
+    """Parse tags from string"""
+    # tags = filter(None, re.sub('[ ,;\t\n\r]','',tag_string).split('#'))
+    tags = re.findall(r'#[A-Za-z0-9]+',tag_string)
+    return tags
+    
+def is_valid_stream_name(name_string):
+    """Check whether the stream name is valid"""
+    name_string = name_string.strip(" ")
+    if (not name_string):
+        return False
+    if re.match(r"[~\!@#\$%\^&\*\(\)\+{}:;\[\]\r\n\t]", name_string):
+        return False
+    name_words = filter(None, re.split(r'[\s]', name_string))
+    if not name_words:
+        return False
+    plain_word_regex = re.compile(r"^[A-Za-z0-9]+[A-Za-z0-9\'-_]+$")
+    for name_word in name_words:
+        if not plain_word_regex.match(name_word):
+            return False
+    return True
 
+def parse_search_keyword(key_word_string):    
+    """Parse key words for search stream"""
+    keywords = {'plain_keywords':[],
+                'tags':[]}  # YW: Can extend to contain @user search later
+    keywords['tags'] = re.findall('#[A-Za-z0-9]+', key_word_string)
+    print ('parse_search_keyword: tags: ' + " ".join(keywords['tags']))
+    original_words = filter(None, re.split(r'[,;\t\n\r\s]', key_word_string))
+    plain_keyword_reg = re.compile(r"^[A-Za-z0-9]+[A-Za-z0-9\'-_]+$")  # YW: allow prime and hyphen
+    # tags_reg = re.compile('^#[a-zA-Z0-9]+$')
+    for word in original_words:
+        print word
+        if plain_keyword_reg.match(word):
+            keywords['plain_keywords'].append(word)
+    print ('parse_search_keyword: plain keywords: ' + " ".join(keywords['plain_keywords']))
+    return keywords
 
 class SearchHandler(webapp2.RequestHandler):
-    def post(self):
-
+    def get(self):
+        MAX_RESULT_NUM = 5
+        original_keyword_string = self.request.get('search_keywords')
+        print ('SearchHandler: original string: '+original_keyword_string)
+        keywords = parse_search_keyword(original_keyword_string)
+      # general searching:
+        queried_keywords = (keywords['plain_keywords'] + keywords['tags'])
+        queried_streams = []
+        if queried_keywords:
+            # allow to check matching part of the string
+            all_streams = stream.query()
+            for temp_stream in all_streams:
+                temp_stream_name_words = filter(None, re.split(r'[\s]',temp_stream.name))
+                print ('Splited Stream Name: ' + "/".join(temp_stream_name_words))
+                if any(name_word in temp_stream_name_words for name_word in keywords['plain_keywords']):
+                    queried_streams.append(temp_stream)
+                else:
+                    temp_stream_tags = temp_stream.tags
+                    if any(tag in temp_stream_tags for tag in keywords['tags']):
+                        queried_streams.append(temp_stream)
+                if len(queried_streams) == MAX_RESULT_NUM:
+                    break
+            
+            #queried_streams = stream.query(ndb.OR(stream.name.IN(queried_keywords), 
+            #                                      stream.tags.IN(queried_keywords))).fetch(MAX_RESULT_NUM)
+        print ('SearchHandler: set of key words: ' + "/".join(queried_keywords))
+        template_values = {'original_keyword_string': original_keyword_string,
+                           'queried_keywords': queried_keywords,
+                           'queried_streams': queried_streams,
+                           'logout_url': users.create_logout_url('/')}
+        template = JINJA_ENVIRONMENT.get_template('search_temp.html')
+        self.response.write(template.render(template_values))
+        
+        
+        
+   
