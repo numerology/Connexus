@@ -25,9 +25,9 @@
             </li>
 		  </ul>
 		  <form class="navbar-form navbar-left" action="/stream_search"  method="get">
-        	<div class="form-group" align = "left">
-				<label for = "search" class = "col-lg-5 control-label">Search</label>
+        	<div class="form-group" align = "center">
           		<input type="text" class="form-control" name="search_keywords" autocomplete="off">
+				<input align="center" class = "btn btn-primary" type = "submit" value = "Search">
         	</div>
 		  </form>
           <ul class="nav navbar-nav navbar-right">
@@ -38,9 +38,6 @@
         <div class="col-lg-8 col-md-7 col-sm-6">
             <h1>Welcome to Connexus</h1>
             <p class="lead">{{String1}}</p>
-			<p>
-				<a class="btn btn-primary btn-lg" href="{{logout_url}}"> Logout</a>
-			</p>
 			<form class = "form-horizontal" action = "/api/create_stream" method = "post">
 					<fieldset>
 				<legend>Create a stream</legend>
@@ -71,10 +68,9 @@
                    		 </div>
 					</div>
 				</div>
-				<button type="submit" class="btn btn-primary">Create</button>
+				<div align="center"><button align="center" type="submit" class="btn btn-primary">Create</button></div>
 					</fieldset>
 			</form>
-
 		</div>
 	</body>
 </html>

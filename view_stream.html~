@@ -41,9 +41,24 @@
 			{%if url_list|length == 0%}
 			<p>Currently there is no image in this stream</p>
 			{% endif %}
-			{% for url in url_list %}
-				<img src = "{{url}}">
-			{% endfor %}
+
+			<table class="table table-striped table-hover" style="width:1000px">
+
+
+				{% for url in url_list %}
+				  {% if loop.index0%3==0 %}
+				  	<tr>
+				  {% endif %}
+				  	<td>{{loop.index0}}
+						<img src = "{{url}}" height="500px">
+				  	</td>
+				  {% if loop.index%3==0 %}
+				  	</tr>
+				  {% endif %}
+				{% endfor %}
+
+
+			</table>
 		</div>
 		<div>
 		    {% if show_subscribe_button%}
@@ -64,7 +79,6 @@
 				{% if show_upload %}
 				<form class = "form" action = "{{upload_url}}" method = "post" enctype = "multipart/form-data">
 					<fieldset>
-<<<<<<< HEAD
 				    <legend>Adding a figure</legend>
 				    <div class = "bs-docs-section">
 					    <div class = "form-group">
@@ -82,25 +96,6 @@
 				    </div>
 				    <button type="submit" class="btn btn-primary">Upload</button>
 				    </fieldset>
-=======
-				<legend>Adding a figure</legend>
-				<div class = "bs-docs-section">
-					<div class = "form-group">
-						<label for = "file" class = "col-lg-2 control-label">File:</label>
-						<div class="col-lg-10">
-                      		<input type="file" class="form-control" name="file">
-                    	</div>
-					</div>
-					<div class = "form-group">
-						<label for = "stream_name" class = "col-lg-2 control-label">Stream name</label>
-						<div class="col-lg-10">
-                      		<input type="text" class="form-control" readonly name="stream_name" value = {{stream.name}} placeholder="Name of stream accepting this figure">
-                   		 </div>
-					</div>
-				</div>
-				<button type="submit" class="btn btn-primary">Upload</button>
-					</fieldset>
->>>>>>> 2f526db78586d0eaffff709dd28ebe927ab30136
 				</form>
 			    {% endif %}
 			</p>
