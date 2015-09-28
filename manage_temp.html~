@@ -23,7 +23,7 @@
               <a href="/stream_trending">Trending</a>
             </li>
 		  </ul>
-		  <form class="navbar-form navbar-left" action="/stream_search"  method="post">
+		  <form class="navbar-form navbar-left" action="/stream_search"  method="get">
         	<div class="form-group" align = "left">
 				<label for = "search" class = "col-lg-5 control-label">Search</label>
           		<input type="text" class="form-control" name="search_keywords" autocomplete="off">
@@ -45,13 +45,6 @@
 				<a class="btn btn-primary" href="{{create_url}}"> Create</a>
 			</p>
 			<p>
-				<a class="btn btn-primary" href="{{upload_url}}"> Add figure</a>
-			</p>
-
-			<p>
-				<a class="btn btn-primary" href="{{view_url}}"> View</a>
-			</p>
-			<p>
 				<a class="btn btn-primary" href="{{search_url}}"> Search</a>
 			</p>
 			<p>
@@ -60,6 +53,38 @@
 			<p>
 				<a class="btn btn-primary" href="{{list_url}}"> ViewAll</a>
 			</p>
+		</div>
+		<div class = "row" align = "middle">
+				{% for stream in stream_owned %}
+			<div class = "col" align = "middle">
+				<a href = "/view/{{stream.key.id()}}" class = thumbnail >
+				<img src = "{{stream.cover_url}}" alt="{{stream.name}}">
+					<div class="caption" align="middle">
+						<h1>{{stream.name}}</h1>
+					</div>
+				</a>
+				<p>
+				<a class="btn btn-primary" href="/api/delete_stream/{{stream.key.id()}}">Delete</a>
+				</p>
+			</div>
+				{% endfor %}
+		</div>
+		<div class = "row" align = "middle"> <!Subscribed Streams>
+				{% for stream in stream_subscribed %}
+			<div class = "col" align = "middle">
+				<a href = "/view/{{stream.key.id()}}" class = thumbnail >
+				<img src = "{{stream.cover_url}}" alt="{{stream.name}}">
+					<div class="caption" align="middle">
+						<h1>{{stream.name}}</h1>
+					</div>
+				</a>
+				<form class="form-horizontal" action="/api/unsubscribe_stream" method="post">
+				    <p><input class = "btn btn-primary" type="submit" value="Unsubscribe" ></input></p>
+				    <input type="hidden" name="stream_id" value="{{stream.key.id()}}"></input>
+				    <input type="hidden" name="return_url" value="{{subscribe_return_url}}"></input>
+			    </form>
+			</div>
+				{% endfor %}
 		</div>
 	</body>
 </html>
