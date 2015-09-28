@@ -12,6 +12,7 @@ routes = [
     webapp2.Route(r'/api/change_freq', handler = TrendingFrequencyHandler, name = 'change_freq_api'),
     webapp2.Route(r'/api/stream_search', handler = SearchHandler, name = 'search_api'),
     webapp2.Route(r'/api/confirm_subscribe', handler = ConfirmSubscribeStreamHandler, name = 'confirm_subscribe_api'),
+    webapp2.Route(r'/api/delete_stream/<id:[\w-]+>', handler = DeleteStreamHandler, name = 'delete_api'),
     
     webapp2.Route(r'/', handler = MainPage, name = 'mainpage'),
     webapp2.Route(r'/management', handler = ManagementHandler, name = 'management'),

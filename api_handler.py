@@ -12,6 +12,7 @@ import webapp2
 import jinja2
 import os
 from datetime import *
+from time import *
 import re  # used to parse list of emails
 from google.appengine.api import mail  # mailing functions in invitation, notification
 import logging  # Log messages
@@ -150,6 +151,23 @@ class ViewStreamHandler(webapp2.RequestHandler):
         template = JINJA_ENVIRONMENT.get_template('view_stream.html')
         self.response.write(template.render(template_values))
 
+class DeleteStreamHandler(webapp2.RequestHandler):
+    def get(self, id):
+        user = users.get_current_user()
+        if user is None:
+        # go to login page
+            print("View Stream Handler: Not logged in")
+            self.redirect(users.create_login_page(self.request.uri))
+            return
+
+
+        current_stream = stream.get_by_id(int(id))
+        if current_stream:
+            current_stream.key.delete()
+
+        self.redirect('/management')
+        return
+
 
 class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
     def post(self):
@@ -235,7 +253,7 @@ class CreateStreamHandler(webapp2.RequestHandler):
                 invitation_email.to = to_addr
                 invitation_email.send()
 
-
+        time.sleep(1)
         self.redirect('/management')
 
 
