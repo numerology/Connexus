@@ -42,6 +42,9 @@
 		        </div>
 		    </div>
 		    <table class="table table-striped table-hover" align="left" style="width:1000px">
+				{% if stream_list|length == 0 %}
+				<p>There is currently no streams.</p>
+				{% else %}
 			    {% for stream in stream_list %}
                     {% if loop.index0%3==0 %}
 			      	    <tr align="left">
@@ -62,6 +65,7 @@
 			      	    </tr>
 			        {% endif %}
 			    {% endfor %}
+				{% endif %}
 		    </table>
 		</div>
 	</body>

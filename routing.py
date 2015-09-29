@@ -25,7 +25,7 @@ routes = [
     webapp2.Route(r'/stream_search', handler = SearchHandler, name = 'searchstream'),
    # webapp2.Route(r'/stream_search', handler = SstreamHandler, name = 'searchstream'),
     webapp2.Route(r'/stream_trending', handler = TstreamHandler, name = 'trendinngstream'),
-    webapp2.Route(r'/error', handler = ErrorHandler, name = 'error'),
+    webapp2.Route(r'/error/<msg:[\s\S-]+>', handler = ErrorHandler, name = 'error'),
     webapp2.Route(r'/view/<id:[\w-]+>/<page:[\w-]+>', handler = ViewStreamHandler, name = 'viewsingle'),
     webapp2.Route(r'/view/<id:[\w-]+>', handler = DefaultViewStreamHandler, name = 'viewsingle'),
     webapp2.Route(r'/upload_fig', handler = UploadHandler, name = 'uploadpage'),

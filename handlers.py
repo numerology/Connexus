@@ -35,7 +35,7 @@ class ManagementHandler(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
         if user is None:
-            self.redirect("/error")
+            self.redirect("/error/"+'You need to login')
             return
         #TODO: find the streams created by user, and streams subscribe to
         stream_owned = stream.query(stream.owner == str(user.user_id())).fetch()
@@ -74,7 +74,7 @@ class UploadHandler(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
         if user is None:
-            self.redirect("/error")
+            self.redirect("/error/"+'You need to login')
 
         upload_url = blobstore.create_upload_url('/upload_photo')
         template_values = {'url': upload_url}
@@ -87,8 +87,8 @@ class LstreamHandler(webapp2.RequestHandler):
 
         user = users.get_current_user()
         if user is None:
-            self.redirect("/error")
-        stream_list = stream.query()
+            self.redirect("/error/"+'You need to login')
+        stream_list = stream.query().order(stream.creation_time).fetch()
         print("running list")
         template_values = {'stream_list': stream_list,
                            'logout_url': users.create_logout_url("/")}
@@ -127,7 +127,7 @@ class TstreamHandler(webapp2.RequestHandler):
         self.response.write(template.render(template_values))
 
 class ErrorHandler(webapp2.RequestHandler):
-    def get(self):
-        template_values = {'logout_url': users.create_logout_url("/")}
+    def get(self,msg):
+        template_values = {'logout_url': users.create_logout_url("/"),'msg':msg}
         template = JINJA_ENVIRONMENT.get_template('error.html')
         self.response.write(template.render(template_values))

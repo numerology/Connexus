@@ -16,6 +16,8 @@ from time import sleep as time_sleep
 import re  # used to parse list of emails
 from google.appengine.api import mail  # mailing functions in invitation, notification
 import logging
+import handlers
+from google.appengine.api import urlfetch
 from math import ceil as connexus_ceil
 
 JINJA_ENVIRONMENT = jinja2.Environment(
@@ -58,6 +60,7 @@ class view_counter(ndb.Model):
 class stream(ndb.Model):
     name = ndb.StringProperty()
     owner = ndb.StringProperty()
+    creation_time = ndb.DateTimeProperty(auto_now_add = True)
     figures = ndb.StructuredProperty(image, repeated=True)
     tags = ndb.StringProperty(repeated=True)
     cover_url = ndb.StringProperty()
@@ -264,7 +267,7 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             user_photo.put()
             queried_stream = stream.query(stream.name == stream_name).get()
             if queried_stream:
-                queried_stream.figures.append(user_photo)
+                queried_stream.figures.insert(0,user_photo)
                 queried_stream.num_of_pics = len(queried_stream.figures)
                 dt = datetime.now()
                 queried_stream.last_modified = str(dt.replace(microsecond = (dt.microsecond / 1000000) * 1000000))[:-3]
@@ -283,19 +286,21 @@ class CreateStreamHandler(webapp2.RequestHandler):
 
         if user is None:
             print 'CreateStreamHandler: No user'
-            self.redirect("/error")
+            self.redirect("/error/"+'You need to login')
             return
         stream_name = self.request.get('name').strip(" ")  #TODO: check whether name is not use
         if (not is_valid_stream_name(stream_name)):
         # empty stream_name should not be allowed
             print('CreateStreamHandler: Stream name not valid!')
-            self.redirect('/error')
+            msg = "CreateStreamHandler: Stream name not valid!"
+            self.redirect('/error/'+msg)
             return
         
         same_name_streams = stream.query(stream.name == stream_name).get()
         if (same_name_streams is not None):
             print 'CreateStreamHandler: Stream name existing, go to error page'
-            self.redirect('/error')
+            msg = 'CreateStreamHandler: Stream name existing'
+            self.redirect('/error/' +msg)
             return
         
         owner = user.user_id()
@@ -409,7 +414,7 @@ class TrendingFrequencyHandler(webapp2.RequestHandler):
         user = users.get_current_user()
 
         if user is None:
-            self.redirect("/error")
+            self.redirect("/error/"+'You need to login')
             return
 
         subscriber_list = trend_subscribers.query()
@@ -465,7 +470,7 @@ class SubscribeStreamHandler(webapp2.RequestHandler):
         # YW: default return url is /management, or return to the url specified
         queried_stream = stream.get_by_id(int(stream_id))
         if queried_stream is None: # stream not found
-            self.redirect('/error')
+            self.redirect('/error/'+'Stream not found')
             return
             
         # YW: check whether there should be a button for subscribe
