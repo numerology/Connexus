@@ -15,8 +15,8 @@ from datetime import *
 from time import sleep as time_sleep
 import re  # used to parse list of emails
 from google.appengine.api import mail  # mailing functions in invitation, notification
-import logging  # Log messages
-
+import logging
+from math import ceil as connexus_ceil
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -34,7 +34,7 @@ Please go to this url: %(subscribe_stream_url)s
 WEB_URL = 'http://just-plate-107116.appspot.com/'
 DEFAULT_RETURN_URL = '/management'  # Default return url for subscribe
 NDB_UPDATE_SLEEP_TIME = 0.3
-
+MAX_IMAGE_LENGTH = 400  # max length of the images longest side
 
 # in this api handler, define the services for:
 # management, create stream, view a stream, image upload, view all stream, search streams, and report request
@@ -132,7 +132,7 @@ class ViewStreamHandler(webapp2.RequestHandler):
         for img in current_stream.figures[9*(npage-1):]:
             if(current_stream.figures.index(img) > 9*npage - 1):
                 break
-            PhotoUrls.append(images.get_serving_url(img.blob_key))
+            PhotoUrls.append(images.get_serving_url(img.blob_key)+"=s"+str(MAX_IMAGE_LENGTH))
             PhotoIdList.append(img.blob_key)
 
         total_pages = int((current_stream.num_of_pics - 0.001)/9 + 1)
@@ -249,7 +249,7 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
         try:
             print ("PhotoUploadHandler: upload handler is running")
             upload = self.get_uploads()[0]
-            print ("PhotoUploadHandler: upload handler is running")
+            print ("PhotoUploadHandler: upload resized")
             stream_name = self.request.get("stream_name")
             user_photo = image(owner=users.get_current_user().user_id(),
                                    blob_key=upload.key(),comment = None)
@@ -294,7 +294,8 @@ class CreateStreamHandler(webapp2.RequestHandler):
         
         parsed_tags = parse_tag(self.request.get('tag'))
         new_stream = stream(name=self.request.get('name'), owner = user.user_id(),
-                            cover_url=self.request.get('cover_url'), tags=parsed_tags, figures=[], num_of_view = 0)
+                            cover_url=self.request.get('cover_url'), tags=parsed_tags, figures=[], num_of_view = 0,
+                            num_of_pics = 0)
         # new_stream = stream(name = 'test', owner = user.user_id(), cover_url = 'test_url',tags=[], figures = [])
         new_stream.put()
         # Create or update user profile
@@ -556,7 +557,8 @@ def parse_search_keyword(key_word_string):
             keywords['plain_keywords'].append(word)
     print ('parse_search_keyword: plain keywords: ' + " ".join(keywords['plain_keywords']))
     return keywords
-
+    
+        
 class SearchHandler(webapp2.RequestHandler):
     def get(self):
         MAX_RESULT_NUM = 5

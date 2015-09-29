@@ -2,6 +2,7 @@
 {% autoescape true %}
 <html>
 	<link href="//bootswatch.com/darkly/bootstrap.min.css" rel="stylesheet">
+	<link href="ywstyle.css" rel="stylesheet">
 	<head>
 	<meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
 
@@ -66,8 +67,8 @@
 				      	<tr>
 				      {% endif %}
 				      	<td align = "middle">
-							<div class = "crop">
-						    <img src = "{{url}}" height="500px">
+							<div class = "img">
+						        <img src = "{{url}}">
 							</div>
 							<a class="btn btn-primary btn-sm" href="/api/delete_fig/{{stream.key.id()}}/{{fig_id_list[loop.index - 1]}}"> Delete</a>
 				      	</td>
