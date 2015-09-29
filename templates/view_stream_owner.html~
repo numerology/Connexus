@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+	<link href="//bootswatch.com/darkly/bootstrap.min.css" rel="stylesheet">
+	<body>
+		<div class = "navbar navbar-default navbar-fixed-top">
+		    <div class = "container-fluid">
+		    <div class="navbar-header">
+              <a href="/management" class="navbar-brand">Connexus</a>
+              <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+            </div>
+		    <div class="collapse navbar-collapse" id="navbar-main">
+              <ul class="nav navbar-nav">
+                <li>
+                  <a href="/management">Management</a>
+                </li>
+                <li>
+                  <a href="/stream_list">View All Streams</a>
+                </li>
+			    <li>
+                  <a href="/stream_trending">Trending</a>
+                </li>
+		      </ul>
+		      <form class="navbar-form navbar-left" action="/stream_search"  method="get">
+            	<div class="form-group" align = "center">
+              		<input type="text" class="form-control" name="search_keywords" autocomplete="off">
+				    <input align="center" class = "btn btn-primary" type = "submit" value = "Search">
+            	</div>
+		      </form>
+              <ul class="nav navbar-nav navbar-right">
+                <li><a class="btn btn-primary" href="{{logout_url}}"> Logout    </a></li>
+              </ul>
+
+            </div>
+		    </div>
+	    </div>
+	    <div class="container">
+		    <div class="col-lg-8 col-md-7 col-sm-6">
+                <h1>Welcome to Connexus</h1>
+                <p class="lead">{{String1}}</p>
+			    <p class="lead">This stream is viewed {{nviews}} times</p>
+			    {%if url_list|length == 0%}
+			    <p>Currently there is no image in this stream</p>
+			    {% endif %}
+			    {% for url in url_list %}
+				    <img src = "{{url}}">
+			    {% endfor %}
+		    </div>
+		    <div>
+		        {% if show_subscribe_button%}
+			    <form class = "form-horizontal" action = "/subscribe/{{stream.key.id()}}" method = "get"> <!Subscribe call the method in SubscribeHandler>
+				    <p><input class = "btn btn-primary" type = "submit" value = "Subscribe"></p>
+				    <input type="hidden" name="return_url" value={{subscribe_return_url}}>
+			    </form>
+			    {% else %}
+			    <p>
+			        {{no_subscribe_message}}
+			    </p>
+			    {% endif %}
+		    </div>
+		</div>
+	</body>
+</html>
+{% endautoescape %}

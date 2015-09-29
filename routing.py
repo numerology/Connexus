@@ -1,9 +1,9 @@
 __author__ = 'Jiaxiao Zheng'
 
-from handlers import *
-from api_handler import *
-from api_handler import image
-from api_handler import stream
+from handlers.handlers import *
+from handlers.api_handler import *
+from handlers.api_handler import image
+from handlers.api_handler import stream
 import webapp2
 
 routes = [
