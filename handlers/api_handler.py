@@ -21,7 +21,7 @@ from google.appengine.api import urlfetch
 from math import ceil as connexus_ceil
 
 JINJA_ENVIRONMENT = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
+    loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__),'../templates')),
     extensions=['jinja2.ext.autoescape'],
     autoescape=True)
 
@@ -188,7 +188,7 @@ class ViewStreamHandler(webapp2.RequestHandler):
                            'logout_url': users.create_logout_url('/'),
                            'no_subscribe_message': no_subscribe_message,
                            'show_subscribe_button': show_subscribe_button,
-                           'show_unsubscribe_button': show_subscribe_button,
+                           'show_unsubscribe_button': show_unsubscribe_button,
                            'show_upload': show_upload,
                            'upload_url':upload_url,
                            'subscribe_return_url': subscribe_return_url,
@@ -300,7 +300,7 @@ class CreateStreamHandler(webapp2.RequestHandler):
         if (same_name_streams is not None):
             print 'CreateStreamHandler: Stream name existing, go to error page'
             msg = 'CreateStreamHandler: Stream name existing'
-            self.redirect('/error/' +msg)
+            self.redirect('/error/' + msg)
             return
         
         owner = user.user_id()
@@ -346,8 +346,8 @@ class CreateStreamHandler(webapp2.RequestHandler):
                 invitation_email.send()
 
         time_sleep(NDB_UPDATE_SLEEP_TIME)
-        self.redirect(('/view/%s' % str(new_stream.key.id())))
-
+        #self.redirect(('/view/%s' % str(new_stream.key.id())))
+        self.redirect('/management')
 
 class TrendReportHandler(webapp2.RequestHandler):
     def get(self, freq):
