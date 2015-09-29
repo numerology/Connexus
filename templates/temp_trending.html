@@ -3,6 +3,8 @@
 <html>
 	<link href="//bootswatch.com/darkly/bootstrap.min.css" rel="stylesheet">
 	<body>
+		<div class = "navbar navbar-default navbar-fixed-top">
+		<div class = "container-fluid">
 		<div class="navbar-header">
           <a href="/management" class="navbar-brand">Connexus</a>
           <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
@@ -11,7 +13,7 @@
             <span class="icon-bar"></span>
           </button>
         </div>
-		<div class="navbar-collapse collapse" id="navbar-main">
+		<div class="collapse navbar-collapse" id="navbar-main">
           <ul class="nav navbar-nav">
             <li>
               <a href="/management">Management</a>
@@ -30,17 +32,22 @@
         	</div>
 		  </form>
           <ul class="nav navbar-nav navbar-right">
-            <li><a class="btn btn-primary" href="{{logout_url}}"> Logout</a></li>
+            <li><a class="btn btn-primary" href="{{logout_url}}"> Logout    </a></li>
           </ul>
 
         </div>
+		</div>
+		</div>
         <div class="container">
+			<div class = "page-header">
 		    <div class = "row">
 		    <div class="col-lg-8 col-md-7 col-sm-6">
+				<br>
                 <h1>Welcome to Connexus</h1>
                 <p class="lead">Top streams on Connexus:</p>
 		    </div>
 		    </div>
+				</div>
 		    <div class="row">
 			    <div class = "col-lg-5">
 				    <div class = "list-group" align = "center" style="width:500px">
@@ -48,7 +55,7 @@
 
 					    <a href = "/view/{{stream.key.id()}}" class = thumbnail">
 					    <div style="width:490px">
-					    <img  src = "{{stream.cover_url}}" alt="{{stream.name}}" title="{{stream.name}}">
+					    <img  src = "{{stream.cover_url}}" style = "height:200px" alt="{{stream.name}}" title="{{stream.name}}">
 					    </div>
 					    <div class="caption" align="center">
 						    <h4>{{stream.name}}</h4>
