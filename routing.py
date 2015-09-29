@@ -13,6 +13,7 @@ routes = [
     webapp2.Route(r'/api/stream_search', handler = SearchHandler, name = 'search_api'),
     webapp2.Route(r'/api/confirm_subscribe', handler = ConfirmSubscribeStreamHandler, name = 'confirm_subscribe_api'),
     webapp2.Route(r'/api/delete_stream/<id:[\w-]+>', handler = DeleteStreamHandler, name = 'delete_api'),
+    webapp2.Route(r'/api/delete_fig/<id:[\w-]+>/<fig_key:[\S-]+>', handler = DeleteFigHandler, name = 'delete_api'),
     webapp2.Route(r'/api/unsubscribe_stream', handler = UnsubscribeStreamHandler, name = 'unsubscribe_api'),
     
     webapp2.Route(r'/', handler = MainPage, name = 'mainpage'),
@@ -25,7 +26,8 @@ routes = [
    # webapp2.Route(r'/stream_search', handler = SstreamHandler, name = 'searchstream'),
     webapp2.Route(r'/stream_trending', handler = TstreamHandler, name = 'trendinngstream'),
     webapp2.Route(r'/error', handler = ErrorHandler, name = 'error'),
-    webapp2.Route(r'/view/<id:[\w-]+>', handler = ViewStreamHandler, name = 'viewsingle'),
+    webapp2.Route(r'/view/<id:[\w-]+>/<page:[\w-]+>', handler = ViewStreamHandler, name = 'viewsingle'),
+    webapp2.Route(r'/view/<id:[\w-]+>', handler = DefaultViewStreamHandler, name = 'viewsingle'),
     webapp2.Route(r'/upload_fig', handler = UploadHandler, name = 'uploadpage'),
     webapp2.Route(r'/upload_photo', handler = PhotoUploadHandler, name = 'uploadapi'),
     #YW add routing for subscribe pate

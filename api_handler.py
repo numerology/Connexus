@@ -48,6 +48,7 @@ class image(ndb.Model):
     date = ndb.DateTimeProperty(auto_now_add = True)
     location = ndb.GeoPtProperty(required=True, default=ndb.GeoPt(0,0))
     blob_key = ndb.BlobKeyProperty()
+    comment = ndb.StringProperty()
 
 
 class view_counter(ndb.Model):
@@ -87,15 +88,20 @@ class trend_subscribers(ndb.Model):
 
 class ViewStreamHandler(webapp2.RequestHandler):
 
-    def get(self, id):
+    def get(self, id, page):
+        #Now the view is constrained to deliver 3*3 = 9 pics in a single page
+        #so for the ith page, it covers from 9*(i-1) to 9*i-1
         user = users.get_current_user()
         if user is None:
         # go to login page
             print("View Stream Handler: Not logged in")
             self.redirect(users.create_login_page(self.request.uri))
             return
+        if page is None:
+            page = 1 #by default the 1st page
 
         PhotoUrls = []
+        PhotoIdList = []
         # all_stream = stream.query()
         current_stream = stream.get_by_id(int(id))
         if not str(user.user_id()) == current_stream.owner:
@@ -122,10 +128,20 @@ class ViewStreamHandler(webapp2.RequestHandler):
         current_stream.put()
 
       #  nviews = Num_Of_Views[id]
-        for img in current_stream.figures:
+        npage = int(page)
+        for img in current_stream.figures[9*(npage-1):]:
+            if(current_stream.figures.index(img) > 9*npage - 1):
+                break
             PhotoUrls.append(images.get_serving_url(img.blob_key))
+            PhotoIdList.append(img.blob_key)
+
+        total_pages = int((current_stream.num_of_pics - 0.001)/9 + 1)
+        print("total pages = " + str(total_pages))
+        url_pages = []
+        for i in range(1,total_pages+1):
+            url_pages.append('/view/'+id+'/'+str(i))
             
-         # TODO: Check user in this page?
+
       #  Add subscribe button
         """show message if owner or already subscribed; show button if not subscribed"""
         no_subscribe_message = "None"
@@ -152,7 +168,10 @@ class ViewStreamHandler(webapp2.RequestHandler):
             no_subscribe_message = "You've already subscribed to the stream" 
         
         template_values = {'String1': current_stream.name, 
-                           'url_list': PhotoUrls, 
+                           'url_list': PhotoUrls,
+                           'fig_id_list': PhotoIdList,
+                           'url_pages' : url_pages,
+                           'num_of_pages': total_pages,
                            'nviews':current_stream.num_of_view,
                            'stream': current_stream,
                            'logout_url': users.create_logout_url('/'),
@@ -165,6 +184,11 @@ class ViewStreamHandler(webapp2.RequestHandler):
                            'unsubscribe_return_url': unsubscribe_return_url,}
         template = JINJA_ENVIRONMENT.get_template('view_stream.html')
         self.response.write(template.render(template_values))
+
+class DefaultViewStreamHandler(webapp2.RequestHandler):
+    def get(self,id):
+        self.redirect('/view/'+id+'/1')
+        return
 
 class DeleteStreamHandler(webapp2.RequestHandler):
     def get(self, id):
@@ -195,6 +219,29 @@ class DeleteStreamHandler(webapp2.RequestHandler):
         self.redirect('/management')
         return
 
+class DeleteFigHandler(webapp2.RequestHandler):
+    def get(self, id, fig_key):
+        user = users.get_current_user()
+        if user is None:
+        # go to login page
+            print("View Stream Handler: Not logged in")
+            self.redirect(users.create_login_page(self.request.uri))
+            return
+
+
+        current_stream = stream.get_by_id(int(id))
+        if current_stream:
+            #delete all the imgs, because they are huge
+            for i in current_stream.figures:
+                if str(i.blob_key) == fig_key:
+                    blobstore.delete(i.blob_key)
+                    current_stream.figures.remove(i)
+        current_stream.num_of_pics -= 1
+        current_stream.put()
+        time_sleep(NDB_UPDATE_SLEEP_TIME)
+        self.redirect('/view/'+id+'/1')
+        return
+
 
 class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
     def post(self):
@@ -205,7 +252,7 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             print ("PhotoUploadHandler: upload handler is running")
             stream_name = self.request.get("stream_name")
             user_photo = image(owner=users.get_current_user().user_id(),
-                                   blob_key=upload.key())
+                                   blob_key=upload.key(),comment = None)
             user_photo.put()
             queried_stream = stream.query(stream.name == stream_name).get()
             if queried_stream:
