@@ -38,7 +38,6 @@ class ManagementHandler(webapp2.RequestHandler):
             self.redirect("/error")
             return
         #TODO: find the streams created by user, and streams subscribe to
-
         stream_owned = stream.query(stream.owner == str(user.user_id())).fetch()
         queried_user_profile = user_profile.query(user_profile.user_id == str(user.user_id())).get()
         stream_subscribed = []
@@ -57,6 +56,7 @@ class ManagementHandler(webapp2.RequestHandler):
                            'stream_owned': stream_owned,
                            'stream_subscribed': stream_subscribed,
                            'unsubscribe_return_url': unsubscribe_return_url,
+                           'stream_subscribed':stream_subscribed
                            }
         template = JINJA_ENVIRONMENT.get_template('manage_temp.html')
         self.response.write(template.render(template_values))

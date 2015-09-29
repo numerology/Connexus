@@ -38,7 +38,11 @@
 		<div class = "row">
 		<div class="col-lg-8 col-md-7 col-sm-6">
             <h1>Welcome to Connexus</h1>
+<<<<<<< HEAD
             <p class="lead">Top streams on Connexus:</p>
+=======
+            <p class="lead">List of all streams</p>
+>>>>>>> 23ff39d07a1932d4a60253422a730d4c5147ca8b
 
 		</div>
 		</div>

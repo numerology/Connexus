@@ -30,8 +30,8 @@ INVITATION_EMAIL_PLAIN_TEXT = """
 Please go to this url: %(subscribe_stream_url)s
 """
 
-WEB_URL = 'connexus-yw.appspot.com'  # TODO: Change this url to the online application
-#WEB_URL = '/'
+#WEB_URL = 'connexus-yw.appspot.com'  # TODO: Change this url to the online application
+WEB_URL = 'http://just-plate-107116.appspot.com/'
 DEFAULT_RETURN_URL = '/management'  # Default return url for subscribe
 NDB_UPDATE_SLEEP_TIME = 0.3
 
@@ -62,10 +62,12 @@ class stream(ndb.Model):
     cover_url = ndb.StringProperty()
     #YW: add property to record subscribers
     subscribers = ndb.UserProperty(repeated=True)
-    tags = ndb.StringProperty(repeated=True)
+
     #TODO: the num_of_view should be calculated by a queue, if a view is outdated, it should be removed
     views = ndb.StructuredProperty(view_counter,repeated = True)
     num_of_view = ndb.IntegerProperty()
+    num_of_pics = ndb.IntegerProperty()
+    last_modified = ndb.StringProperty()
 
 
 class subscribe_list(ndb.Model):
@@ -208,6 +210,9 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             queried_stream = stream.query(stream.name == stream_name).get()
             if queried_stream:
                 queried_stream.figures.append(user_photo)
+                queried_stream.num_of_pics = len(queried_stream.figures)
+                dt = datetime.now()
+                queried_stream.last_modified = str(dt.replace(microsecond = (dt.microsecond / 1000000) * 1000000))[:-3]
                 print "PhotoUploadHandler: put is being called"
                 queried_stream.put()
             else:
