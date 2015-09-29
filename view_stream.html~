@@ -2,6 +2,19 @@
 {% autoescape true %}
 <html>
 	<link href="//bootswatch.com/darkly/bootstrap.min.css" rel="stylesheet">
+	<link href="ywstyle.css" rel="stylesheet">
+	<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
+
+	<style type="text/css">
+	.crop {
+    	width: 800px;
+    	height: 500px;
+    	overflow: hidden;
+	}
+
+	</style>
+	</head>
 	<body>
 		<div class="navbar-header">
           <a href="/management" class="navbar-brand">Connexus</a>
@@ -44,12 +57,20 @@
 			        {%if url_list|length == 0%}
 			        <h2><p style="text-align:center">Currently there is no image in this stream</p><h2>
 			        {% endif %}
+					<th colspan="3"><h3>
+						{% for url in url_pages %}
+						<a href = "{{url}}">|{{loop.index}}|</a>
+						{% endfor %}
+					</h3></th>
 				    {% for url in url_list %}
 				      {% if loop.index0%3==0 %}
 				      	<tr>
 				      {% endif %}
-				      	<td>
-						    <img src = "{{url}}" height="500px">
+				      	<td align = "middle">
+							<div class = "img">
+						        <img src = "{{url}}">
+							</div>
+							<a class="btn btn-primary btn-sm" href="/api/delete_fig/{{stream.key.id()}}/{{fig_id_list[loop.index - 1]}}"> Delete</a>
 				      	</td>
 				      {% if loop.index%3==0 %}
 				      	</tr>
