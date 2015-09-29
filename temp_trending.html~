@@ -65,7 +65,7 @@
 						    <legend>Trending notification options</legend>
 						    <div class = "form-group">
 							    <label for="select" class = "col-lg-6 control-label" style="text-align:center">Notification Rate</label>
-						        <div class="col-lg-6">
+						        <div class="col-lg-5">
 							    <select class="form-control" name = "frequency">
 								    <option>none</option>
 								    <option>5 mins</option>

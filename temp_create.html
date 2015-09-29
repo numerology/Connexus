@@ -25,57 +25,55 @@
             </li>
 		  </ul>
 		  <form class="navbar-form navbar-left" action="/stream_search"  method="get">
-        	<div class="form-group" align = "left">
-				<label for = "search" class = "col-lg-5 control-label">Search</label>
+        	<div class="form-group" align = "center">
           		<input type="text" class="form-control" name="search_keywords" autocomplete="off">
+				<input align="center" class = "btn btn-primary" type = "submit" value = "Search">
         	</div>
 		  </form>
           <ul class="nav navbar-nav navbar-right">
             <li><a class="btn btn-primary" href="{{logout_url}}"> Logout</a></li>
           </ul>
         </div>
-        
-        <div class="col-lg-8 col-md-7 col-sm-6">
-            <h1>Welcome to Connexus</h1>
-            <p class="lead">{{String1}}</p>
-			<p>
-				<a class="btn btn-primary btn-lg" href="{{logout_url}}"> Logout</a>
-			</p>
-			<form class = "form-horizontal" action = "/api/create_stream" method = "post">
-					<fieldset>
-				<legend>Create a stream</legend>
-				<div class = "bs-docs-section">
-					<div class = "form-group">
-						<label for = "inputname" class = "col-lg-2 control-label">Name</label>
-						<div class="col-lg-10">
-                      		<input type="text" class="form-control" name="name" placeholder="Name">
-                    	</div>
-					</div>
-                    <div class = "form-group">
-			        	<label for = "inputsubscriber" class = "col-lg-2 control-label">Add subscribers</label>
-				        <div class = "col-lg-10">
-                            <input type = "text" class = "form-control" name = "subscriber" placeholder = "Input your friends emails to subscribe">
-                            <input type = "text" class = "form-control" name = "subscribe_message" placeholder = "(Optional) Message for your friends">
-				        </div>			        
-		            </div>
-		            <div class = "form-group">
-			        	<label for = "inputtag" class = "col-lg-2 control-label">Tag</label>
-				        <div class = "col-lg-10">
-                            <input type = "text" class = "form-control" name = "tag" placeholder = "#Tags">
-				        </div>
-		            </div>
-					<div class = "form-group">
-						<label for = "inputurl" class = "col-lg-2 control-label">cover url</label>
-						<div class="col-lg-10">
-                      		<input type="text" class="form-control" name="cover_url" placeholder="Url for your cover figure">
-                   		 </div>
-					</div>
-				</div>
-				<button type="submit" class="btn btn-primary">Create</button>
-					</fieldset>
-			</form>
-
-		</div>
+        <div class="container" align="left">
+            <div class="col-lg-8 col-md-7 col-sm-6">
+                <h1>Welcome to Connexus</h1>
+                <form class = "form-horizontal" action = "/api/create_stream" method = "post">
+					    <fieldset>
+				    <legend>Create a stream</legend>
+				    <div class = "bs-docs-section">
+					    <div class = "form-group">
+						    <label for = "inputname" class = "col-lg-2 control-label" style="text-align:right">Name</label>
+						    <div class="col-lg-10">
+                          		<input type="text" class="form-control" name="name" placeholder="Name">
+                        	</div>
+					    </div>
+                        <div class = "form-group">
+			            	<label for = "inputsubscriber" class = "col-lg-2 control-label" style="text-align:right">Add subscribers</label>
+				            <div class = "col-lg-10">
+                                <input type = "text" class = "form-control" name = "subscriber" placeholder = "Input your friends emails to subscribe">
+                            </div>
+                            <div class = "col-lg-10">
+                                <input type = "text" class = "form-control" name = "subscribe_message" placeholder = "(Optional) Message for your friends">
+				            </div>			        
+		                </div>
+		                <div class = "form-group">
+			            	<label for = "inputtag" class = "col-lg-2 control-label" style="text-align:center">Tag</label>
+				            <div class = "col-lg-10">
+                                <input type = "text" class = "form-control" name = "tag" placeholder = "#Tags">
+				            </div>
+		                </div>
+					    <div class = "form-group"  text-align="center">
+						    <label for = "inputurl" class = "col-lg-2 control-label" style="text-align:right">Cover URL</label>
+						    <div class="col-lg-10">
+                          		<input type="text" class="form-control" name="cover_url" placeholder="Url for your cover figure">
+                       		 </div>
+					    </div>
+				    </div>
+				    <div align="center"><button align="center" type="submit" class="btn btn-primary">Create</button></div>
+					    </fieldset>
+			    </form>
+		    </div>
+	    </div>
 	</body>
 </html>
 {% endautoescape %}

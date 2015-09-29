@@ -12,7 +12,7 @@ import webapp2
 import jinja2
 import os
 from datetime import *
-import time
+from time import sleep as time_sleep
 import re  # used to parse list of emails
 from google.appengine.api import mail  # mailing functions in invitation, notification
 import logging  # Log messages
@@ -33,6 +33,7 @@ Please go to this url: %(subscribe_stream_url)s
 #WEB_URL = 'connexus-yw.appspot.com'  # TODO: Change this url to the online application
 WEB_URL = 'http://just-plate-107116.appspot.com/'
 DEFAULT_RETURN_URL = '/management'  # Default return url for subscribe
+NDB_UPDATE_SLEEP_TIME = 0.3
 
 
 # in this api handler, define the services for:
@@ -73,6 +74,11 @@ class subscribe_list(ndb.Model):
     identity = ndb.StringProperty()
     subscribed_streams = ndb.StringProperty(repeated = True)
 
+class user_profile(ndb.Model):
+    user_id = ndb.StringProperty()
+    user_email = ndb.StringProperty()
+    own_streams = ndb.StringProperty(repeated=True)  # names of streams owned by user
+    subscribed_streams = ndb.StringProperty(repeated=True)  # names of streams user subscribe to 
 
 class trend_subscribers(ndb.Model):
     user_email = ndb.StringProperty()
@@ -90,7 +96,7 @@ class ViewStreamHandler(webapp2.RequestHandler):
             return
 
         PhotoUrls = []
-        all_stream = stream.query()
+        # all_stream = stream.query()
         current_stream = stream.get_by_id(int(id))
         if not str(user.user_id()) == current_stream.owner:
 
@@ -124,7 +130,9 @@ class ViewStreamHandler(webapp2.RequestHandler):
         """show message if owner or already subscribed; show button if not subscribed"""
         no_subscribe_message = "None"
         show_subscribe_button = True
+        show_unsubscribe_button = False
         subscribe_return_url = self.request.uri
+        unsubscribe_return_url = self.request.uri
         show_upload = False
         upload_url = blobstore.create_upload_url('/upload_photo')
         if user.user_id() == current_stream.owner:
@@ -140,6 +148,7 @@ class ViewStreamHandler(webapp2.RequestHandler):
                 break
         if already_subscribed:
             show_subscribe_button = False
+            show_unsubscribe_button = True
             no_subscribe_message = "You've already subscribed to the stream" 
         
         template_values = {'String1': current_stream.name, 
@@ -149,9 +158,11 @@ class ViewStreamHandler(webapp2.RequestHandler):
                            'logout_url': users.create_logout_url('/'),
                            'no_subscribe_message': no_subscribe_message,
                            'show_subscribe_button': show_subscribe_button,
+                           'show_unsubscribe_button': show_subscribe_button,
                            'show_upload': show_upload,
                            'upload_url':upload_url,
-                           'subscribe_return_url': subscribe_return_url}
+                           'subscribe_return_url': subscribe_return_url,
+                           'unsubscribe_return_url': unsubscribe_return_url,}
         template = JINJA_ENVIRONMENT.get_template('view_stream.html')
         self.response.write(template.render(template_values))
 
@@ -170,9 +181,17 @@ class DeleteStreamHandler(webapp2.RequestHandler):
             #delete all the imgs, because they are huge
             for i in current_stream.figures:
                 blobstore.delete(i.blob_key)
+            queried_user_profile = user_profile.query(user_profile.user_id == user.user_id()).get()
+            if queried_user_profile:
+                if current_stream.name in queried_user_profile.own_streams:
+                    queried_user_profile.own_streams.remove(str(current_stream.name))
+                if (not queried_user_profile.own_streams) and (not queried_user_profile.subscibed_streams):
+                    # no own_streams nor subscribed_streams
+                    queried_user_profile.key.delete()
+                else:
+                    queried_user_profile.put()
             current_stream.key.delete()
-
-        time.sleep(0.3)
+        time_sleep(NDB_UPDATE_SLEEP_TIME)
         self.redirect('/management')
         return
 
@@ -188,21 +207,17 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             user_photo = image(owner=users.get_current_user().user_id(),
                                    blob_key=upload.key())
             user_photo.put()
-            all_stream = stream.query()
-            for siter in all_stream:
-                if str(siter.name) == stream_name:
-
-                    siter.figures.append(user_photo)
-                    siter.num_of_pics = len(siter.figures)
-                    dt = datetime.now()
-                    siter.last_modified = str(dt.replace(microsecond = (dt.microsecond / 1000000) * 1000000))[:-3]
-                    print "PhotoUploadHandler: put is being called"
-                    siter.put()
-                    break
-          #  time.sleep(1)
-          #  current_stream = stream.get_by_id(stream_id)
-
-            self.redirect('/view/%s' % siter.key.id())
+            queried_stream = stream.query(stream.name == stream_name).get()
+            if queried_stream:
+                queried_stream.figures.append(user_photo)
+                queried_stream.num_of_pics = len(queried_stream.figures)
+                dt = datetime.now()
+                queried_stream.last_modified = str(dt.replace(microsecond = (dt.microsecond / 1000000) * 1000000))[:-3]
+                print "PhotoUploadHandler: put is being called"
+                queried_stream.put()
+            else:
+                print ("PhotoUploadHander: No stream found matching "+stream_name)
+            self.redirect('/view/%s' % queried_stream.key.id())
         except:
             self.error(500)
 
@@ -235,6 +250,11 @@ class CreateStreamHandler(webapp2.RequestHandler):
                             cover_url=self.request.get('cover_url'), tags=parsed_tags, figures=[], num_of_view = 0)
         # new_stream = stream(name = 'test', owner = user.user_id(), cover_url = 'test_url',tags=[], figures = [])
         new_stream.put()
+        # Create or update user profile
+        queried_user_profile = user_profile.query(user_profile.user_id == user.user_id()).get()
+        if not queried_user_profile:
+            queried_user_profile = user_profile(user_id=user.user_id(), user_email=user.email(), own_streams=[], subscribed_streams=[])
+        queried_user_profile.own_streams.append(new_stream.name)
         
         subscribers = parse_subscriber(self.request.get('subscriber'))
         for to_addr in subscribers:
@@ -264,18 +284,18 @@ class CreateStreamHandler(webapp2.RequestHandler):
                 invitation_email.to = to_addr
                 invitation_email.send()
 
-        time.sleep(1)
-        self.redirect('/management')
+        time_sleep(NDB_UPDATE_SLEEP_TIME)
+        self.redirect(('/view/%s' % str(new_stream.key.id())))
 
 
 class TrendReportHandler(webapp2.RequestHandler):
     def get(self, freq):
         if int(freq) == 1:
-            subscriber_list = trend_subscribers.query(trend_subscribers.report_freq == '5 mins')
+            subscriber_list = trend_subscribers.query(trend_subscribers.report_freq == '5 mins').fetch()
         elif int(freq) == 2:
-            subscriber_list = trend_subscribers.query(trend_subscribers.report_freq == '1 hour')
+            subscriber_list = trend_subscribers.query(trend_subscribers.report_freq == '1 hour').fetch()
         elif int(freq) == 4:
-            subscriber_list = trend_subscribers.query(trend_subscribers.report_freq == 'everyday')
+            subscriber_list = trend_subscribers.query(trend_subscribers.report_freq == 'everyday').fetch()
         else: subscriber_list = []
         print "TrendReportHandler: trend sending"
 
@@ -396,8 +416,6 @@ class SubscribeStreamHandler(webapp2.RequestHandler):
         if already_subscribed:
             show_subscribe_button = False
             no_subscribe_message = "You've already subscribed to the stream"
-
-            
         template = JINJA_ENVIRONMENT.get_template('subscribe_temp.html')
         template_values = {'stream': queried_stream,
                            'logout_url': users.create_logout_url('/'),
@@ -434,12 +452,11 @@ class ConfirmSubscribeStreamHandler(webapp2.RequestHandler):
         if not already_subscribed:
             queried_stream.subscribers.append(user)
         queried_stream.put()  # update stream
-        queried_subscribe_list = subscribe_list.query(subscribe_list.identity == user.user_id()).get()
-        # YW: should return at most one subscribe list
-        if queried_subscribe_list is None:
-            queried_subscribe_list = subscribe_list(identity=user.user_id(), subscribed_streams=[])
-        queried_subscribe_list.subscribed_streams.append(queried_stream.name)
-        queried_subscribe_list.put()
+        queried_user_profile = user_profile.query(user_profile.user_id == user.user_id()).get()
+        if not queried_user_profile:
+            queried_user_profile = user_profile(user_id=user.user_id(), user_email=user.email(), own_streams=[], subscribed_streams=[])
+        queried_user_profile.subscribed_streams.append(queried_stream.name)
+        queried_user_profile.put()
 
         self.redirect(return_url)
 
@@ -527,6 +544,31 @@ class SearchHandler(webapp2.RequestHandler):
         template = JINJA_ENVIRONMENT.get_template('search_temp.html')
         self.response.write(template.render(template_values))
         
+class UnsubscribeStreamHandler(webapp2.RequestHandler):
+    def post(self):
+        user = users.get_current_user()
+        if user is None:
+            self.redirect(users.create_login_url(self.request.uri))
+            return        
+        return_url = str(self.request.get('return_url','/'))
+        stream_id = int(self.request.get('stream_id'))
+        print ('UnsubscribeHandler: Return Url: '+ return_url)
+        queried_stream = stream.get_by_id(stream_id)
+        if queried_stream:
+            for temp_user in queried_stream.subscribers:
+                if user.user_id() == temp_user.user_id():
+                    queried_stream.subscribers.remove(temp_user)
+                    queried_stream.put()
+                    break
+            queried_user_profile = user_profile.query(user_profile.user_id == user.user_id()).get()
+            if queried_user_profile:
+                queried_user_profile.subscribed_streams.remove(queried_stream.name)
+                if  (not queried_user_profile.own_streams) and (not queried_user_profile.subscribed_streams):
+                    # no own_streams nor subscribed_streams
+                    queried_user_profile.key.delete()
+                else:
+                    queried_user_profile.put()
         
+        time_sleep(NDB_UPDATE_SLEEP_TIME)
+        self.redirect(return_url)
         
-   
