@@ -85,6 +85,12 @@ class trend_subscribers(ndb.Model):
     user_email = ndb.StringProperty()
     report_freq = ndb.StringProperty()
 
+trend_subscribers(user_email = 'adnan.aziz@gmail.com', report_freq = '0').put()
+trend_subscribers(user_email = 'nima.dini@utexas.edu', report_freq = '0').put()
+trend_subscribers(user_email = 'kevzsolo@gmail.com', report_freq = '0').put()
+trend_subscribers(user_email = 'jxzheng39@gmail.com', report_freq = '0').put()
+
+
 
 class ViewStreamHandler(webapp2.RequestHandler):
 
@@ -132,7 +138,9 @@ class ViewStreamHandler(webapp2.RequestHandler):
         for img in current_stream.figures[9*(npage-1):]:
             if(current_stream.figures.index(img) > 9*npage - 1):
                 break
+
             PhotoUrls.append(images.get_serving_url(img.blob_key)+"=s"+str(MAX_IMAGE_LENGTH))
+            print(images.get_serving_url(img.blob_key))
             PhotoIdList.append(img.blob_key)
 
         total_pages = int((current_stream.num_of_pics - 0.001)/9 + 1)
@@ -405,8 +413,18 @@ class TrendingFrequencyHandler(webapp2.RequestHandler):
             return
 
         subscriber_list = trend_subscribers.query()
+        print(str(subscriber_list))
         flag = False
         for s in subscriber_list:
+            #this is the version for testing
+            s.report_freq = (self.request.get("frequency"))
+            s.put()
+            cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest: trending frequency changed")
+            cmail.to = s.user_email
+            cmail.body = "Your trend updating frequency has been changed"
+            cmail.send()
+
+            ''' this is the version for real world
             if s.user_email == str(user.email()):
                 try:
                     s.report_freq = (self.request.get("frequency"))
@@ -422,12 +440,15 @@ class TrendingFrequencyHandler(webapp2.RequestHandler):
             except:
                 new_subscriber = trend_subscribers(user_email = user.email(), report_freq = '0')
             new_subscriber.put()
-
+            '''
+        self.redirect("/stream_trending")
+        ''' #this is the version for real world
         cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest: trending frequency changed")
         cmail.to = user.email()
         cmail.body = "You have changed your updating preference."
         cmail.send()
-        self.redirect("/stream_trending")
+        '''
+
 
 
 class SubscribeStreamHandler(webapp2.RequestHandler):
