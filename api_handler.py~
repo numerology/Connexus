@@ -285,7 +285,7 @@ class CreateStreamHandler(webapp2.RequestHandler):
                 invitation_email.send()
 
         time_sleep(NDB_UPDATE_SLEEP_TIME)
-        self.redirect('/management')
+        self.redirect(('/view/%s' % str(new_stream.key.id())))
 
 
 class TrendReportHandler(webapp2.RequestHandler):

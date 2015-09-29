@@ -34,55 +34,55 @@
           </ul>
 
         </div>
+        <div class="container">
+		    <div class = "row">
+		    <div class="col-lg-8 col-md-7 col-sm-6">
+                <h1>Welcome to Connexus</h1>
+                <p class="lead">Top streams on Connexus:</p>
+		    </div>
+		    </div>
+		    <div class="row">
+			    <div class = "col-lg-5">
+				    <div class = "list-group" align = "center" style="width:500px">
+				    {% for stream in stream_list %}
 
-		<div class = "row">
-		<div class="col-lg-8 col-md-7 col-sm-6">
-            <h1>Welcome to Connexus</h1>
-            <p class="lead">Top streams on Connexus:</p>
-		</div>
-		</div>
-		<div class="row">
-			<div class = "col-lg-5">
-				<div class = "list-group" align = "center" style="width:500px">
-				{% for stream in stream_list %}
-
-					<a href = "/view/{{stream.key.id()}}" class = thumbnail">
-					<div style="width:490px">
-					<img  src = "{{stream.cover_url}}" alt="{{stream.name}}" title="{{stream.name}}">
-					</div>
-					<div class="caption" align="center">
-						<h4>{{stream.name}}</h4>
-						<h4>{{stream.num_of_view}} views in the last hour</h4>
-					</div>
-					</a>
-				{% endfor %}
-				</div>
-			</div>
-			<div class = "col-lg-3">
-				<form class = "form-horizontal" action = "/api/change_freq" method = "post">
-					<fieldset>
-						<legend>Trending notification options</legend>
-						<div class = "form-group">
-							<br>
-							<label for="select" class = "col-lg-5 control-label" style="text-align:center">Notification frequency</label>
-						    <div class="col-lg-5">
-							<select class="form-control" name = "frequency">
-								<option>none</option>
-								<option>5 mins</option>
-								<option>1 hour</option>
-								<option>everyday</option>
-							</select>
+					    <a href = "/view/{{stream.key.id()}}" class = thumbnail">
+					    <div style="width:490px">
+					    <img  src = "{{stream.cover_url}}" alt="{{stream.name}}" title="{{stream.name}}">
+					    </div>
+					    <div class="caption" align="center">
+						    <h4>{{stream.name}}</h4>
+						    <h4>{{stream.num_of_view}} views in the last hour</h4>
+					    </div>
+					    </a>
+				    {% endfor %}
+				    </div>
+			    </div>
+			    <div class = "col-lg-4">
+			        <div class="well bs-component">
+				    <form class = "form-horizontal" action = "/api/change_freq" method = "post">
+					    <fieldset>
+						    <legend>Trending notification options</legend>
+						    <div class = "form-group">
+							    <label for="select" class = "col-lg-6 control-label" style="text-align:center">Notification Rate</label>
+						        <div class="col-lg-6">
+							    <select class="form-control" name = "frequency">
+								    <option>none</option>
+								    <option>5 mins</option>
+								    <option>1 hour</option>
+								    <option>everyday</option>
+							    </select>
+						        </div>
 						    </div>
-						</div>
-						<br>
-						<div align="center">
-						<button type="submit" class="btn btn-primary">Submit</button>
-						</div>
-					</fieldset>
-				</form>
-			</div>
-		</div>
-
+						    <div align="center">
+						        <button type="submit" class="btn btn-primary">Submit</button>
+						    </div>
+					    </fieldset>
+				    </form>
+				    </div>
+			    </div>
+		    </div>
+        </div>
 	</body>
 </html>
 {% endautoescape %}

@@ -217,7 +217,7 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
                 queried_stream.put()
             else:
                 print ("PhotoUploadHander: No stream found matching "+stream_name)
-            self.redirect('/view/%s' % siter.key.id())
+            self.redirect('/view/%s' % queried_stream.key.id())
         except:
             self.error(500)
 
@@ -285,7 +285,7 @@ class CreateStreamHandler(webapp2.RequestHandler):
                 invitation_email.send()
 
         time_sleep(NDB_UPDATE_SLEEP_TIME)
-        self.redirect('/management')
+        self.redirect(('/view/%s' % str(new_stream.key.id())))
 
 
 class TrendReportHandler(webapp2.RequestHandler):
