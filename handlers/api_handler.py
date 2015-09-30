@@ -432,7 +432,7 @@ class TrendingFrequencyHandler(webapp2.RequestHandler):
             #this is the version for testing
             s.report_freq = (self.request.get("frequency"))
             s.put()
-            cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest: trending frequency changed")
+            cmail = mail.EmailMessage(sender = user.email(), subject = "Connexus Digest: trending frequency changed")
             cmail.to = s.user_email
             cmail.body = "Your trend updating frequency has been changed"
             cmail.send()
