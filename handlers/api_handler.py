@@ -88,10 +88,18 @@ class trend_subscribers(ndb.Model):
     user_email = ndb.StringProperty()
     report_freq = ndb.StringProperty()
 
-trend_subscribers(user_email = 'adnan.aziz@gmail.com', report_freq = '0').put()
-trend_subscribers(user_email = 'nima.dini@utexas.edu', report_freq = '0').put()
-trend_subscribers(user_email = 'kevzsolo@gmail.com', report_freq = '0').put()
-trend_subscribers(user_email = 'jxzheng39@gmail.com', report_freq = '0').put()
+trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'adnan.aziz@gmail.com').fetch()
+if len(trend_slist)==0:
+    trend_subscribers(user_email = 'adnan.aziz@gmail.com', report_freq = '0').put()
+trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'nima.dini@utexas.edu').fetch()
+if len(trend_slist)==0:
+    trend_subscribers(user_email = 'nima.dini@utexas.edu', report_freq = '0').put()
+trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'kevzsolo@gmail.com').fetch()
+if len(trend_slist)==0:
+    trend_subscribers(user_email = 'kevzsolo@gmail.com', report_freq = '0').put()
+trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'jxzheng39@gmail.com').fetch()
+if len(trend_slist)==0:
+    trend_subscribers(user_email = 'jxzheng39@gmail.com', report_freq = '0').put()
 
 
 
