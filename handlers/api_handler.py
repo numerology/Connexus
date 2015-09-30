@@ -361,11 +361,14 @@ class TrendReportHandler(webapp2.RequestHandler):
 
         stream_list = stream.query().order(-stream.num_of_view).fetch(3)
 
+        to_list = []
+        for s in subscriber_list:
+            to_list.append(s.user_email)
+
         if (len(stream_list) == 3):
 
-            for s in subscriber_list:
                 cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
-                cmail.to = s.user_email
+                cmail.to = to_list
                 cmail.body = """ Hello, following is your connexus digest. The top 3 most popular stream are:
                 %(name1)s, %(name2)s, %(name3)s. To check the detail please click thru the following link:
                 %(trending_url)s
@@ -376,9 +379,9 @@ class TrendReportHandler(webapp2.RequestHandler):
                 cmail.send()
 
         elif (len(stream_list) == 2):
-             for s in subscriber_list:
+
                 cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
-                cmail.to = s.user_email
+                cmail.to = to_list
                 cmail.body = """ Hello, following is your connexus digest. The top 2 most popular stream are:
                 %(name1)s, %(name2)s. To check the detail please click thru the following link:
                 %(trending_url)s
@@ -388,9 +391,9 @@ class TrendReportHandler(webapp2.RequestHandler):
                 cmail.send()
 
         elif (len(stream_list) == 1):
-             for s in subscriber_list:
+
                 cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
-                cmail.to = s.user_email
+                cmail.to = to_list
                 cmail.body = """ Hello, following is your connexus digest. The top 1 most popular stream are:
                 %(name1)s. To check the detail please click thru the following link:
                 %(trending_url)s
@@ -398,9 +401,9 @@ class TrendReportHandler(webapp2.RequestHandler):
                        'trending_url':'http://just-plate-107116.appspot.com/stream_trending'}
                 cmail.send()
         else:
-            for s in subscriber_list:
+
                 cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
-                cmail.to = s.user_email
+                cmail.to = to_list
                 cmail.body = """ Hello, following is your connexus digest. Sorry at this time we do not have any stream.
                  To check the detail please click thru the following link:
                 %(trending_url)s
