@@ -347,11 +347,14 @@ class CreateStreamHandler(webapp2.RequestHandler):
                                                                 'message': subscribe_message,
                                                                 'subscribe_stream_url': url_to_subscribe})
         invitation_email.html = template.render(template_values)
-        logging.debug(invitation_email.body)
+        #logging.debug(invitation_email.body)
+        receiver_addrs = []
         for to_addr in subscribers:
             if mail.is_email_valid(to_addr):
-                invitation_email.to = to_addr
-                invitation_email.send()
+                receiver_addrs.append(to_addr)
+        if not receiver_addrs:
+            invitation_email.to = to_addr
+            invitation_email.send()
 
         time_sleep(NDB_UPDATE_SLEEP_TIME)
         #self.redirect(('/view/%s' % str(new_stream.key.id())))

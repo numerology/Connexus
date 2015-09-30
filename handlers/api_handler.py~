@@ -88,10 +88,18 @@ class trend_subscribers(ndb.Model):
     user_email = ndb.StringProperty()
     report_freq = ndb.StringProperty()
 
-trend_subscribers(user_email = 'adnan.aziz@gmail.com', report_freq = '0').put()
-trend_subscribers(user_email = 'nima.dini@utexas.edu', report_freq = '0').put()
-trend_subscribers(user_email = 'kevzsolo@gmail.com', report_freq = '0').put()
-trend_subscribers(user_email = 'jxzheng39@gmail.com', report_freq = '0').put()
+trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'adnan.aziz@gmail.com').fetch()
+if len(trend_slist)==0:
+    trend_subscribers(user_email = 'adnan.aziz@gmail.com', report_freq = '0').put()
+trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'nima.dini@utexas.edu').fetch()
+if len(trend_slist)==0:
+    trend_subscribers(user_email = 'nima.dini@utexas.edu', report_freq = '0').put()
+trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'kevzsolo@gmail.com').fetch()
+if len(trend_slist)==0:
+    trend_subscribers(user_email = 'kevzsolo@gmail.com', report_freq = '0').put()
+trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'jxzheng39@gmail.com').fetch()
+if len(trend_slist)==0:
+    trend_subscribers(user_email = 'jxzheng39@gmail.com', report_freq = '0').put()
 
 
 
@@ -339,7 +347,8 @@ class CreateStreamHandler(webapp2.RequestHandler):
                                                                 'message': subscribe_message,
                                                                 'subscribe_stream_url': url_to_subscribe})
         invitation_email.html = template.render(template_values)
-        logging.debug(invitation_email.body)
+        #logging.debug(invitation_email.body)
+        receiver_addrs = []
         for to_addr in subscribers:
             if mail.is_email_valid(to_addr):
                 invitation_email.to = to_addr
@@ -424,7 +433,7 @@ class TrendingFrequencyHandler(webapp2.RequestHandler):
             #this is the version for testing
             s.report_freq = (self.request.get("frequency"))
             s.put()
-            cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest: trending frequency changed")
+            cmail = mail.EmailMessage(sender = user.email(), subject = "Connexus Digest: trending frequency changed")
             cmail.to = s.user_email
             cmail.body = "Your trend updating frequency has been changed"
             cmail.send()
@@ -542,7 +551,7 @@ def parse_subscriber(subscriber_string):
     if subscriber_string == '':
         return []
     else:
-        splitter = r'[,;\t\r\n]'
+        splitter = r'[,;\t\r\n\s]'
         subscribers = re.split(splitter, subscriber_string)
         return subscribers
         
