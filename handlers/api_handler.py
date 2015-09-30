@@ -340,8 +340,8 @@ class CreateStreamHandler(webapp2.RequestHandler):
         for to_addr in subscribers:
             if mail.is_email_valid(to_addr):
                 receiver_addrs.append(to_addr)
-        if not receiver_addrs:
-            invitation_email.to = to_addr
+        if receiver_addrs:
+            invitation_email.to = receiver_addrs
             invitation_email.send()
 
         time_sleep(NDB_UPDATE_SLEEP_TIME)
@@ -444,7 +444,7 @@ class TrendingFrequencyHandler(webapp2.RequestHandler):
         cmail.body = "Your trend updating frequency has been changed"
         cmail.send()
 
-            ''' this is the version for real world
+        ''' this is the version for real world
             if s.user_email == str(user.email()):
                 try:
                     s.report_freq = (self.request.get("frequency"))
