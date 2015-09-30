@@ -88,18 +88,6 @@ class trend_subscribers(ndb.Model):
     user_email = ndb.StringProperty()
     report_freq = ndb.StringProperty()
 
-trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'adnan.aziz@gmail.com').fetch()
-if len(trend_slist)==0:
-    trend_subscribers(user_email = 'adnan.aziz@gmail.com', report_freq = '0').put()
-trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'nima.dini@utexas.edu').fetch()
-if len(trend_slist)==0:
-    trend_subscribers(user_email = 'nima.dini@utexas.edu', report_freq = '0').put()
-trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'kevzsolo@gmail.com').fetch()
-if len(trend_slist)==0:
-    trend_subscribers(user_email = 'kevzsolo@gmail.com', report_freq = '0').put()
-trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'jxzheng39@gmail.com').fetch()
-if len(trend_slist)==0:
-    trend_subscribers(user_email = 'jxzheng39@gmail.com', report_freq = '0').put()
 
 
 
@@ -420,6 +408,18 @@ class TrendReportHandler(webapp2.RequestHandler):
 class TrendingFrequencyHandler(webapp2.RequestHandler):
     def post(self):
         user = users.get_current_user()
+        trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'adnan.aziz@gmail.com').fetch()
+        if len(trend_slist)==0:
+            trend_subscribers(user_email = 'adnan.aziz@gmail.com', report_freq = '0').put()
+        trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'nima.dini@utexas.edu').fetch()
+        if len(trend_slist)==0:
+            trend_subscribers(user_email = 'nima.dini@utexas.edu', report_freq = '0').put()
+        trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'kevzsolo@gmail.com').fetch()
+        if len(trend_slist)==0:
+            trend_subscribers(user_email = 'kevzsolo@gmail.com', report_freq = '0').put()
+        trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'jxzheng39@gmail.com').fetch()
+        if len(trend_slist)==0:
+            trend_subscribers(user_email = 'jxzheng39@gmail.com', report_freq = '0').put()
 
         if user is None:
             self.redirect("/error/"+'You need to login')
@@ -428,14 +428,18 @@ class TrendingFrequencyHandler(webapp2.RequestHandler):
         subscriber_list = trend_subscribers.query()
         print(str(subscriber_list))
         flag = False
+
+        to_list = []
         for s in subscriber_list:
             #this is the version for testing
             s.report_freq = (self.request.get("frequency"))
             s.put()
-            cmail = mail.EmailMessage(sender = user.email(), subject = "Connexus Digest: trending frequency changed")
-            cmail.to = s.user_email
-            cmail.body = "Your trend updating frequency has been changed"
-            cmail.send()
+            to_list.append(s.user_email)
+
+        cmail = mail.EmailMessage(sender = user.email(), subject = "Connexus Digest: trending frequency changed")
+        cmail.to = to_list
+        cmail.body = "Your trend updating frequency has been changed"
+        cmail.send()
 
             ''' this is the version for real world
             if s.user_email == str(user.email()):
