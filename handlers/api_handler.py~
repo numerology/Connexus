@@ -16,10 +16,12 @@ from time import sleep as time_sleep
 import re  # used to parse list of emails
 from google.appengine.api import mail  # mailing functions in invitation, notification
 import logging
+import handlers
+from google.appengine.api import urlfetch
 from math import ceil as connexus_ceil
 
 JINJA_ENVIRONMENT = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
+    loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__),'../templates')),
     extensions=['jinja2.ext.autoescape'],
     autoescape=True)
 
@@ -58,6 +60,7 @@ class view_counter(ndb.Model):
 class stream(ndb.Model):
     name = ndb.StringProperty()
     owner = ndb.StringProperty()
+    creation_time = ndb.DateTimeProperty(auto_now_add = True)
     figures = ndb.StructuredProperty(image, repeated=True)
     tags = ndb.StringProperty(repeated=True)
     cover_url = ndb.StringProperty()
@@ -84,6 +87,12 @@ class user_profile(ndb.Model):
 class trend_subscribers(ndb.Model):
     user_email = ndb.StringProperty()
     report_freq = ndb.StringProperty()
+
+trend_subscribers(user_email = 'adnan.aziz@gmail.com', report_freq = '0').put()
+trend_subscribers(user_email = 'nima.dini@utexas.edu', report_freq = '0').put()
+trend_subscribers(user_email = 'kevzsolo@gmail.com', report_freq = '0').put()
+trend_subscribers(user_email = 'jxzheng39@gmail.com', report_freq = '0').put()
+
 
 
 class ViewStreamHandler(webapp2.RequestHandler):
@@ -132,7 +141,9 @@ class ViewStreamHandler(webapp2.RequestHandler):
         for img in current_stream.figures[9*(npage-1):]:
             if(current_stream.figures.index(img) > 9*npage - 1):
                 break
+
             PhotoUrls.append(images.get_serving_url(img.blob_key)+"=s"+str(MAX_IMAGE_LENGTH))
+            print(images.get_serving_url(img.blob_key))
             PhotoIdList.append(img.blob_key)
 
         total_pages = int((current_stream.num_of_pics - 0.001)/9 + 1)
@@ -177,7 +188,7 @@ class ViewStreamHandler(webapp2.RequestHandler):
                            'logout_url': users.create_logout_url('/'),
                            'no_subscribe_message': no_subscribe_message,
                            'show_subscribe_button': show_subscribe_button,
-                           'show_unsubscribe_button': show_subscribe_button,
+                           'show_unsubscribe_button': show_unsubscribe_button,
                            'show_upload': show_upload,
                            'upload_url':upload_url,
                            'subscribe_return_url': subscribe_return_url,
@@ -256,7 +267,7 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             user_photo.put()
             queried_stream = stream.query(stream.name == stream_name).get()
             if queried_stream:
-                queried_stream.figures.append(user_photo)
+                queried_stream.figures.insert(0,user_photo)
                 queried_stream.num_of_pics = len(queried_stream.figures)
                 dt = datetime.now()
                 queried_stream.last_modified = str(dt.replace(microsecond = (dt.microsecond / 1000000) * 1000000))[:-3]
@@ -275,19 +286,21 @@ class CreateStreamHandler(webapp2.RequestHandler):
 
         if user is None:
             print 'CreateStreamHandler: No user'
-            self.redirect("/error")
+            self.redirect("/error/"+'You need to login')
             return
         stream_name = self.request.get('name').strip(" ")  #TODO: check whether name is not use
         if (not is_valid_stream_name(stream_name)):
         # empty stream_name should not be allowed
             print('CreateStreamHandler: Stream name not valid!')
-            self.redirect('/error')
+            msg = "CreateStreamHandler: Stream name not valid!"
+            self.redirect('/error/'+msg)
             return
         
         same_name_streams = stream.query(stream.name == stream_name).get()
         if (same_name_streams is not None):
             print 'CreateStreamHandler: Stream name existing, go to error page'
-            self.redirect('/error')
+            msg = 'CreateStreamHandler: Stream name existing'
+            self.redirect('/error/' + msg)
             return
         
         owner = user.user_id()
@@ -333,8 +346,8 @@ class CreateStreamHandler(webapp2.RequestHandler):
                 invitation_email.send()
 
         time_sleep(NDB_UPDATE_SLEEP_TIME)
-        self.redirect(('/view/%s' % str(new_stream.key.id())))
-
+        #self.redirect(('/view/%s' % str(new_stream.key.id())))
+        self.redirect('/management')
 
 class TrendReportHandler(webapp2.RequestHandler):
     def get(self, freq):
@@ -401,12 +414,22 @@ class TrendingFrequencyHandler(webapp2.RequestHandler):
         user = users.get_current_user()
 
         if user is None:
-            self.redirect("/error")
+            self.redirect("/error/"+'You need to login')
             return
 
         subscriber_list = trend_subscribers.query()
+        print(str(subscriber_list))
         flag = False
         for s in subscriber_list:
+            #this is the version for testing
+            s.report_freq = (self.request.get("frequency"))
+            s.put()
+            cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest: trending frequency changed")
+            cmail.to = s.user_email
+            cmail.body = "Your trend updating frequency has been changed"
+            cmail.send()
+
+            ''' this is the version for real world
             if s.user_email == str(user.email()):
                 try:
                     s.report_freq = (self.request.get("frequency"))
@@ -422,12 +445,15 @@ class TrendingFrequencyHandler(webapp2.RequestHandler):
             except:
                 new_subscriber = trend_subscribers(user_email = user.email(), report_freq = '0')
             new_subscriber.put()
-
+            '''
+        self.redirect("/stream_trending")
+        ''' #this is the version for real world
         cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest: trending frequency changed")
         cmail.to = user.email()
         cmail.body = "You have changed your updating preference."
         cmail.send()
-        self.redirect("/stream_trending")
+        '''
+
 
 
 class SubscribeStreamHandler(webapp2.RequestHandler):
@@ -444,7 +470,7 @@ class SubscribeStreamHandler(webapp2.RequestHandler):
         # YW: default return url is /management, or return to the url specified
         queried_stream = stream.get_by_id(int(stream_id))
         if queried_stream is None: # stream not found
-            self.redirect('/error')
+            self.redirect('/error/'+'Stream not found')
             return
             
         # YW: check whether there should be a button for subscribe

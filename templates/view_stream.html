@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+	<link href="//bootswatch.com/darkly/bootstrap.min.css" rel="stylesheet">
+	<link href="ywstyle.css" rel="stylesheet">
+	<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
+
+	<style type="text/css">
+	.crop {
+    	width: 800px;
+    	height: 500px;
+    	overflow: hidden;
+	}
+	</style>
+	</head>
+	<body>
+		<div class = "navbar navbar-default navbar-fixed-top">
+		    <div class = "container-fluid">
+		    <div class="navbar-header">
+              <a href="/management" class="navbar-brand">Connexus</a>
+              <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+            </div>
+		    <div class="collapse navbar-collapse" id="navbar-main">
+              <ul class="nav navbar-nav">
+                <li>
+                  <a href="/management">Management</a>
+                </li>
+                <li>
+                  <a href="/stream_list">View All Streams</a>
+                </li>
+			    <li>
+                  <a href="/stream_trending">Trending</a>
+                </li>
+		      </ul>
+		      <form class="navbar-form navbar-left" action="/stream_search"  method="get">
+            	<div class="form-group" align = "center">
+              		<input type="text" class="form-control" name="search_keywords" autocomplete="off">
+				    <input align="center" class = "btn btn-primary" type = "submit" value = "Search">
+            	</div>
+		      </form>
+              <ul class="nav navbar-nav navbar-right">
+                <li><a class="btn btn-primary" href="{{logout_url}}"> Logout    </a></li>
+              </ul>
+
+            </div>
+		    </div>
+	    </div>
+		<div class="container">
+			<div class = "page-header">
+		    <div class="col-lg-8 col-md-7 col-sm-6">
+                <h1><p>{{String1}}</p></h1>
+			    <h4><p style="text-align:left">This stream is viewed {{nviews}} times</p></h4>
+		    </div>
+			</div>
+		    <div class="col-lg-8 col-md-7 col-sm-6">
+		    <div class = "row">
+			    <table class="table table-striped table-hover" style="width:700px" align="left">
+			        {%if url_list|length == 0%}
+			        <h2><p style="text-align:center">Currently there is no image in this stream</p><h2>
+			        {% endif %}
+					<th colspan="3"><h3>
+						{% for url in url_pages %}
+						<a href = "{{url}}">|{{loop.index}}|</a>
+						{% endfor %}
+					</h3></th>
+				    {% for url in url_list %}
+				      {% if loop.index0%3==0 %}
+				      	<tr>
+				      {% endif %}
+				      	<td align = "middle">
+							<div class = "img">
+						        <img src = "{{url}}">
+							</div>
+							<a class="btn btn-primary btn-sm" href="/api/delete_fig/{{stream.key.id()}}/{{fig_id_list[loop.index - 1]}}"> Delete</a>
+				      	</td>
+				      {% if loop.index%3==0 %}
+				      	</tr>
+				      {% endif %}
+				    {% endfor %}
+			    </table>
+		    </div>
+            </div>
+
+
+		    <div class ="col-lg-8 col-md-7 col-sm-6">
+		        {% if show_subscribe_button%}
+			    <form class = "form-horizontal" action = "/subscribe/{{stream.key.id()}}" method = "get"> <!Subscribe call the method in SubscribeHandler>
+				    <p><input class = "btn btn-primary" type = "submit" value = "Subscribe"></p>
+				    <input type="hidden" name="return_url" value={{subscribe_return_url}}>
+			    </form>
+			    {% elif show_unsubscribe_button %}
+			    <form class = "form-horizontal" action = "/api/unsubscribe_stream" method = "post"> <!Unsubscribe stream>
+				    <p><input class = "btn btn-primary" type = "submit" value = "Unsubscribe"></p>
+				    <input type="hidden" name="stream_id" value="{{stream.key.id()}}">
+				    <input type="hidden" name="return_url" value="{{unsubscribe_return_url}}">
+			    </form>
+			    {% else %}
+			    <p>
+				    {% if show_upload %}
+				    <div class="col-lg-8">
+				        <div class="well bs-component">
+				            <form class = "bs-component" action = "{{upload_url}}" method = "post" enctype = "multipart/form-data">
+					            <fieldset>
+				                <legend>Add figure to {{stream.name}}</legend>
+				                <div class = "form-group">
+					                <label for = "file" class="control-label">Choose file to upload:</label>
+					                <div class = "input-group">
+                                  		<input type="file" class="btn btn-info" name="file"></input>
+                                	    <span class=""input-group-btn>
+                                	        <button type="submit" class="btn btn-default">Upload</button>
+                            	        </span>
+                                    	<input type="hidden" name="stream_name" value="{{stream.name}}">
+					                </div>
+				                </div>
+				                </fieldset>
+				            </form>
+				        </div>
+			        </div>
+				    {% endif %}
+			    </p>
+			    {% endif %}
+		    </div>
+	    </div>
+	</body>
+</html>
+{% endautoescape %}
