@@ -542,7 +542,7 @@ def parse_subscriber(subscriber_string):
     if subscriber_string == '':
         return []
     else:
-        splitter = r'[,;\t\r\n]'
+        splitter = r'[,;\t\r\n\s]'
         subscribers = re.split(splitter, subscriber_string)
         return subscribers
         
