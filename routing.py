@@ -29,7 +29,8 @@ routes = [
     webapp2.Route(r'/view/<id:[\w-]+>/<page:[\w-]+>', handler = ViewStreamHandler, name = 'viewsingle'),
     webapp2.Route(r'/view/<id:[\w-]+>', handler = DefaultViewStreamHandler, name = 'viewsingle'),
     webapp2.Route(r'/upload_fig', handler = UploadHandler, name = 'uploadpage'),
-    webapp2.Route(r'/upload_photo', handler = PhotoUploadHandler, name = 'uploadapi'),
+    webapp2.Route('/upload_photo', handler = PhotoUploadHandler, name = 'uploadapi'),
+    webapp2.Route('/generate_upload_url', handler = GenerateUploadUrlHandler),
     #YW add routing for subscribe pate
     webapp2.Route(r'/subscribe/<stream_id:[\w-]+>', handler = SubscribeStreamHandler, name = 'subscribestream'),
     webapp2.Route(r'/report_trend/<freq:[\w-]+>', handler = TrendReportHandler, name = 'uploadapi')

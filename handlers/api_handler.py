@@ -249,6 +249,11 @@ class DeleteFigHandler(webapp2.RequestHandler):
         self.redirect('/view/'+id+'/1')
         return
 
+class GenerateUploadUrlHandler(webapp2.RequestHandler):
+      #
+    def get(self):
+        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.out.write(blobstore.create_upload_url('/upload_photo'))
 
 class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
     def post(self):
@@ -274,6 +279,10 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             self.redirect('/view/%s' % queried_stream.key.id())
         except:
             self.error(500)
+
+
+
+
 
 
 class CreateStreamHandler(webapp2.RequestHandler):

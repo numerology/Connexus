@@ -2,16 +2,64 @@
 {% autoescape true %}
 <html>
 	<link href="//bootswatch.com/darkly/bootstrap.min.css" rel="stylesheet">
-	<link href="ywstyle.css" rel="stylesheet">
+
 	<head>
 	<meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
+	<script src="https://rawgit.com/enyo/dropzone/master/dist/dropzone.js"></script>
+	<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+	<script type = "text/javascript">
+	function sleep(milliseconds) {
+  		var start = new Date().getTime();
+  		for (var i = 0; i < 1e7; i++) {
+    		if ((new Date().getTime() - start) > milliseconds){
+      			break;
+    		}
+  		}
+	}
 
+	Dropzone.options.uploader = {
+		url: "{{upload_url}}",
+    	autoProcessQueue: true,
+    	uploadMultiple: true,
+    	parallelUploads: 100,
+    	addRemoveLinks: true,
+    	uploadMultiple: true,
+    	acceptedFiles: 'image/*, audio/*, video/*',
+    	maxFiles: 10,
+  		init: function() {
+
+    		this.on("complete", function(file) {
+
+				var upurl = '0';
+    			console.log('Triggering');
+				$.ajax({
+					type: 'get',
+            		url: '/generate_upload_url',
+            		async: false,
+            		success: function(data) {
+            			console.log(data);
+              			$('#uploader').attr("action",data);
+              			upurl = data;
+              			console.log("set");
+
+            		},
+        		});
+				this.options.url = upurl;
+
+
+    		});
+  		}
+	};
+
+	</script>
 	<style type="text/css">
 	.crop {
     	width: 800px;
     	height: 500px;
     	overflow: hidden;
 	}
+
+
 	</style>
 	</head>
 	<body>
@@ -104,6 +152,7 @@
 				    {% if show_upload %}
 				    <div class="col-lg-8">
 				        <div class="well bs-component">
+							<!--
 				            <form class = "bs-component" action = "{{upload_url}}" method = "post" enctype = "multipart/form-data">
 					            <fieldset>
 				                <legend>Add figure to {{stream.name}}</legend>
@@ -119,6 +168,13 @@
 				                </div>
 				                </fieldset>
 				            </form>
+				            -->
+
+							<form action="{{upload_url}}" class="dropzone" method = "POST" enctype="multipart/form-data" id="uploader">
+								<div class="dropzone-previews"></div>
+								<input type="hidden" name="stream_name" value="{{stream.name}}">
+
+							</form>
 				        </div>
 			        </div>
 				    {% endif %}
