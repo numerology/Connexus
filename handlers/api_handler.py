@@ -16,7 +16,6 @@ from time import sleep as time_sleep
 import re  # used to parse list of emails
 from google.appengine.api import mail  # mailing functions in invitation, notification
 import logging
-import handlers
 from google.appengine.api import urlfetch
 from math import ceil as connexus_ceil
 

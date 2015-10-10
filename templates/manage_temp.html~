@@ -61,7 +61,7 @@
           background-image: none;
         }
         .ui-helper-hidden-accessible { display:none; }
-	    </style>
+	</style>
 	</head>
 	<body>
 	<div class = "navbar navbar-default navbar-fixed-top">

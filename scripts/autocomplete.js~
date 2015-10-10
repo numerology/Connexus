@@ -16,6 +16,11 @@ $(document).ready(function(){
                 cache[term] = data;
                 response(data);
             })
+        },
+        open: function(){
+            $(.ui-autocomplete:visible).css({color:"#FF0000",
+                                             background:"#FFFFFF",
+                                             });
         }
     });
     $('#build_completion_index').on("submit", function(e){

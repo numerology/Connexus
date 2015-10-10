@@ -15,3 +15,10 @@ indexes:
   properties:
   - name: date
     direction: desc
+
+- kind: stream
+  properties:
+  - name: num_of_view
+    direction: desc
+  - name: num_of_pics
+    direction: desc
