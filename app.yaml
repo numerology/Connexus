@@ -6,6 +6,12 @@ application: connexus-yw
 
 # Handlers match in order, put above the default handler.
 handlers:
+- url: /images
+  static_dir: images
+
+- url: /scripts
+  static_dir: scripts
+
 - url: /stylesheets
   static_dir: stylesheets
   
