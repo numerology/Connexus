@@ -14,6 +14,7 @@ routes = [
     webapp2.Route(r'/api/confirm_subscribe', handler = ConfirmSubscribeStreamHandler, name = 'confirm_subscribe_api'),
     webapp2.Route(r'/api/delete_stream/<id:[\w-]+>', handler = DeleteStreamHandler, name = 'delete_api'),
     webapp2.Route(r'/api/delete_fig/<id:[\w-]+>/<fig_key:[\S-]+>', handler = DeleteFigHandler, name = 'delete_api'),
+    webapp2.Route(r'/api/delete_fig_partial/<id:[\w-]+>/<fig_key:[\S-]+>', handler = MiniDeleteFigHandler, name = 'delete_api'),
     webapp2.Route(r'/api/unsubscribe_stream', handler = UnsubscribeStreamHandler, name = 'unsubscribe_api'),
     
     webapp2.Route(r'/', handler = MainPage, name = 'mainpage'),
@@ -27,10 +28,11 @@ routes = [
     webapp2.Route(r'/stream_trending', handler = TstreamHandler, name = 'trendinngstream'),
     webapp2.Route(r'/error/<msg:[\s\S-]+>', handler = ErrorHandler, name = 'error'),
     webapp2.Route(r'/view/<id:[\w-]+>/<page:[\w-]+>', handler = ViewStreamHandler, name = 'viewsingle'),
+    webapp2.Route(r'/refresh/<id:[\w-]+>/<page:[\w-]+>', handler = RefreshHandler, name = 'refresh'),
     webapp2.Route(r'/view/<id:[\w-]+>', handler = DefaultViewStreamHandler, name = 'viewsingle'),
     webapp2.Route(r'/upload_fig', handler = UploadHandler, name = 'uploadpage'),
     webapp2.Route('/upload_photo', handler = PhotoUploadHandler, name = 'uploadapi'),
-    webapp2.Route('/generate_upload_url', handler = GenerateUploadUrlHandler),
+    webapp2.Route('/generate_upload_url/<stream_id:[\w-]+>', handler = GenerateUploadUrlHandler),
     #YW add routing for subscribe pate
     webapp2.Route(r'/subscribe/<stream_id:[\w-]+>', handler = SubscribeStreamHandler, name = 'subscribestream'),
     webapp2.Route(r'/report_trend/<freq:[\w-]+>', handler = TrendReportHandler, name = 'uploadapi')
