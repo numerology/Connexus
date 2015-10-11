@@ -17,8 +17,9 @@ import re  # used to parse list of emails
 from google.appengine.api import mail  # mailing functions in invitation, notification
 import logging
 import handlers
+import random
 from google.appengine.api import urlfetch
-from math import ceil as connexus_ceil
+
 import json
 
 JINJA_ENVIRONMENT = jinja2.Environment(
@@ -277,6 +278,42 @@ class RefreshHandler(webapp2.RequestHandler):
         template = JINJA_ENVIRONMENT.get_template('refresh.html')
         self.response.write(template.render(template_values))
 
+class GeoView(webapp2.RequestHandler):
+    def get(self,id):
+
+        user = users.get_current_user()
+        if user is None:
+        # go to login page
+            print("View Stream Handler: Not logged in")
+            self.redirect(users.create_login_page(self.request.uri))
+            return
+        photo_info_list = []
+        current_stream = stream.get_by_id(int(id))
+        for photo in current_stream.figures:
+            print('added photoinfo')
+            print(str(photo.date))
+            current_info = {'time':str(photo.date),
+                            'lng':float(str(photo.location).split(',')[0]),
+                            'lat':float(str(photo.location).split(',')[1]),
+                            'url':images.get_serving_url(photo.blob_key)}
+            photo_info_list.append(current_info)
+            print('added photoinfo')
+
+        template_values = {'photo_info_list':photo_info_list,
+                           'String1':current_stream.name
+                           }
+        template = JINJA_ENVIRONMENT.get_template('geoview.html')
+        self.response.write(template.render(template_values))
+
+class GeoViewFetch(webapp2.RequestHandler):
+    def get(self,stream_id):
+        self.response.headers['Content-Type'] = 'text/plain'
+        current_stream = stream.get_by_id(int(stream_id))
+        bkey = current_stream.figures[0].blob_key
+
+        self.response.out.write(json.dumps({'upload_url':blobstore.create_upload_url('/upload_photo'), 'blob_key':str(bkey)}))
+
+
 class DefaultViewStreamHandler(webapp2.RequestHandler):
     def get(self,id):
         self.redirect('/view/'+id+'/1')
@@ -363,7 +400,7 @@ class GenerateUploadUrlHandler(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = 'text/plain'
         current_stream = stream.get_by_id(int(stream_id))
         bkey = current_stream.figures[0].blob_key
-        json.dumps({})
+
         self.response.out.write(json.dumps({'upload_url':blobstore.create_upload_url('/upload_photo'), 'blob_key':str(bkey)}))
 
 class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
@@ -374,8 +411,9 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             upload = self.get_uploads()[0]
             print ("PhotoUploadHandler: upload resized")
             stream_name = self.request.get("stream_name")
+            picloc=ndb.GeoPt(-57.32652122521709+114.65304245043419*random.random(),-123.046875+246.09375*random.random())
             user_photo = image(owner=users.get_current_user().user_id(),
-                                   blob_key=upload.key(),comment = None)
+                                   blob_key=upload.key(),comment = None,location = picloc)
             user_photo.put()
             queried_stream = stream.query(stream.name == stream_name).get()
             if queried_stream:

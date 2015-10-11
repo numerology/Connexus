@@ -30,6 +30,8 @@ routes = [
     webapp2.Route(r'/view/<id:[\w-]+>/<page:[\w-]+>', handler = ViewStreamHandler, name = 'viewsingle'),
     webapp2.Route(r'/refresh/<id:[\w-]+>/<page:[\w-]+>', handler = RefreshHandler, name = 'refresh'),
     webapp2.Route(r'/view/<id:[\w-]+>', handler = DefaultViewStreamHandler, name = 'viewsingle'),
+    webapp2.Route(r'/geoview/<id:[\w-]+>', handler = GeoView, name = 'geoview'),
+ #   webapp2.Route(r'/geoview_fetch/<id:[\w-]+>', handler = GeoViewFetch, name = 'geoviewf'),
     webapp2.Route(r'/upload_fig', handler = UploadHandler, name = 'uploadpage'),
     webapp2.Route('/upload_photo', handler = PhotoUploadHandler, name = 'uploadapi'),
     webapp2.Route('/generate_upload_url/<stream_id:[\w-]+>', handler = GenerateUploadUrlHandler),
