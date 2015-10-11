@@ -4,11 +4,8 @@ from google.appengine.ext import ndb
 from api_handler import *
 from handlers import *
 import constants
+from constants import CompletionIndex
 import re
-
-
-class CompletionIndex(ndb.Model):
-    keywords = ndb.StringProperty(repeated=True, indexed=False)
 
 
 class BuildCompletionIndexHandler(webapp2.RequestHandler):
@@ -30,8 +27,6 @@ class BuildCompletionIndexHandler(webapp2.RequestHandler):
 
         completionindex.keywords = keywords
         completionindex.put()
-        constants.AUTO_COMPLETION_INDEX = keywords
-        self.response.write
 
 
 def extract_stream_keywords(temp_stream):

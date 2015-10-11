@@ -7,6 +7,7 @@ import re
 import json
 from google.appengine.ext import ndb
 import constants
+from constants import CompletionIndex
 
 WORD_LIST = ["Babel", "Car", "Dag", "Texas", "Van", "Zebra", "Adnan", "Algorithm", "Austin", ]
 
@@ -18,8 +19,12 @@ class AutoCompleteHandler(webapp2.RequestHandler):
         no_backslash_string = str(self.request.get("keywords")).replace("\\"," ")
         keywords = filter(None, re.split(r'[ ,;\t\n\r\s]', no_backslash_string.lower() ) )
         result = []
-        print constants.AUTO_COMPLETION_INDEX
-        for word in constants.AUTO_COMPLETION_INDEX:  # copy
+        completion_words = []
+        completion_index = CompletionIndex.query().get()
+        if completion_index:
+            completion_words = completion_index.keywords
+        print completion_words
+        for word in completion_words:  # copy
             if any(key in word.lower() for key in keywords):
                 result.append(word)
                 if len(result) == constants.AUTO_COMPLETE_LENGTH:

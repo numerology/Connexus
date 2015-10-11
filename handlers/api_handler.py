@@ -18,6 +18,7 @@ from google.appengine.api import mail  # mailing functions in invitation, notifi
 import logging
 from google.appengine.api import urlfetch
 from math import ceil as connexus_ceil
+import constants
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__),'../templates')),
@@ -591,12 +592,15 @@ def parse_search_keyword(key_word_string):
                 'tags':[]}  # YW: Can extend to contain @user search later
     keywords['tags'] = re.findall('#[A-Za-z0-9]+', key_word_string)
     print ('parse_search_keyword: tags: ' + " ".join(keywords['tags']))
+    # print key_word_string
     original_words = filter(None, re.split(r'[,;\t\n\r\s]', key_word_string))
-    plain_keyword_reg = re.compile(r"^[A-Za-z0-9]+[A-Za-z0-9\'-_]+$")  # YW: allow prime and hyphen
+    # print original_words
+    plain_keyword_reg = re.compile(r"[A-Za-z0-9\'\-_]+")  # YW: allow prime and hyphen
+    plain_keyword_reg_start = re.compile(r"^[A-Za-z0-9]+")
     # tags_reg = re.compile('^#[a-zA-Z0-9]+$')
     for word in original_words:
-        print word
-        if plain_keyword_reg.match(word):
+        # print word
+        if plain_keyword_reg.match(word) and plain_keyword_reg_start.match(word):
             keywords['plain_keywords'].append(word)
     print ('parse_search_keyword: plain keywords: ' + " ".join(keywords['plain_keywords']))
     return keywords
@@ -613,21 +617,16 @@ class SearchHandler(webapp2.RequestHandler):
         queried_streams = []
         if queried_keywords:
             # allow to check matching part of the string
-            all_streams = stream.query()
+            all_streams = stream.query().order(-stream.num_of_view, -stream.num_of_pics)
             for temp_stream in all_streams:
-                temp_stream_name_words = filter(None, re.split(r'[\s]',temp_stream.name))
-                print ('Splited Stream Name: ' + "/".join(temp_stream_name_words))
-                if any(name_word in temp_stream_name_words for name_word in keywords['plain_keywords']):
-                    queried_streams.append(temp_stream)
-                else:
-                    temp_stream_tags = temp_stream.tags
-                    if any(tag in temp_stream_tags for tag in keywords['tags']):
-                        queried_streams.append(temp_stream)
+                temp_stream_words = []
+                temp_stream_words.extend(filter(None, re.split(r'[\s]',temp_stream.name)))
+                temp_stream_words.extend(temp_stream.tags)
+                temp_stream_string = " ".join(list(set(temp_stream_words) - constants.CACHED_STOP_WORDS)).lower()
+                if any(temp_keyword.lower() in temp_stream_string for temp_keyword in queried_keywords):
+                    queried_streams.append(temp_stream) 
                 if len(queried_streams) == MAX_RESULT_NUM:
                     break
-            
-            #queried_streams = stream.query(ndb.OR(stream.name.IN(queried_keywords), 
-            #                                      stream.tags.IN(queried_keywords))).fetch(MAX_RESULT_NUM)
         print ('SearchHandler: set of key words: ' + "/".join(queried_keywords))
         template_values = {'original_keyword_string': original_keyword_string,
                            'queried_keywords': queried_keywords,
