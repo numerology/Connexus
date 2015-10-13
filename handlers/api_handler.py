@@ -318,9 +318,13 @@ class GeoView(webapp2.RequestHandler):
             self.redirect(users.create_login_page(self.request.uri))
             return
 
-        # TODO: illegal stream id
+
         photo_info_list = []
         current_stream = stream.get_by_id(int(id))
+        if(not current_stream):
+            self.redirect("/error/" + 'Wrong stream or page number')
+            return
+
         for photo in current_stream.figures:
             print('added photoinfo')
             print(str(photo.date))
@@ -337,7 +341,8 @@ class GeoView(webapp2.RequestHandler):
             print('added photoinfo')
 
         template_values = {'photo_info_list':photo_info_list,
-                           'String1':current_stream.name
+                           'String1':current_stream.name,
+                           'stream_id':current_stream.key.id()
                            }
         template = JINJA_ENVIRONMENT.get_template('geoview.html')
         self.response.write(template.render(template_values))
@@ -366,10 +371,13 @@ class DeleteStreamHandler(webapp2.RequestHandler):
             self.redirect(users.create_login_page(self.request.uri))
             return
 
-        #TODO: Illegal stream id
 
 
         current_stream = stream.get_by_id(int(id))
+        if(not current_stream):
+            self.redirect("/error/" + 'Wrong stream or page number')
+            return
+
         if current_stream:
             #delete all the imgs, because they are huge
             for i in current_stream.figures:
@@ -397,23 +405,34 @@ class DeleteFigHandler(webapp2.RequestHandler):
             self.redirect(users.create_login_page(self.request.uri))
             return
 
-        #TODO: illegal streamid or fig_key
+
 
 
         current_stream = stream.get_by_id(int(id))
+        if(not current_stream):
+            self.redirect("/error/" + 'Wrong stream or page number')
+            return
+
+        flag = False
         if current_stream:
             #delete all the imgs, because they are huge
             for i in current_stream.figures:
                 if str(i.blob_key) == fig_key:
                     blobstore.delete(i.blob_key)
                     current_stream.figures.remove(i)
+                    flag = True
                     break
 
                 dtstring = str(i.date)
                 dtkey = re.sub("[^0-9]", "", dtstring)
                 if dtkey == fig_key:
                     current_stream.figures.remove(i)
+                    flag = True
+                    break
 
+        if(not flag):
+            self.redirect("/error/" + 'Designated fig does not exist')
+            return
 
         current_stream.num_of_pics -= 1
         current_stream.put()
@@ -430,15 +449,26 @@ class MiniDeleteFigHandler(webapp2.RequestHandler):
             self.redirect(users.create_login_page(self.request.uri))
             return
 
-        #TODO: illegal streamid or fig_key
+
 
         current_stream = stream.get_by_id(int(id))
+        if(not current_stream):
+            self.redirect("/error/" + 'Wrong stream or page number')
+            return
+
+        flag = False
         if current_stream:
             #delete all the imgs, because they are huge
             for i in current_stream.figures:
                 if str(i.blob_key) == fig_key:
                     blobstore.delete(i.blob_key)
                     current_stream.figures.remove(i)
+                    flag = True
+                    break
+
+        if(not flag):
+            self.redirect("/error/" + 'Designated fig does not exist')
+            return
         current_stream.num_of_pics -= 1
         current_stream.put()
         time_sleep(NDB_UPDATE_SLEEP_TIME)
