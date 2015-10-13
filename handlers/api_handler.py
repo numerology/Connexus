@@ -17,7 +17,7 @@ import re  # used to parse list of emails
 from google.appengine.api import mail  # mailing functions in invitation, notification
 import logging
 
-import handlers
+
 import random
 
 
@@ -57,6 +57,8 @@ class image(ndb.Model):
     date = ndb.DateTimeProperty(auto_now_add = True)
     location = ndb.GeoPtProperty(required=True, default=ndb.GeoPt(0,0))
     blob_key = ndb.BlobKeyProperty()
+    external = ndb.BooleanProperty(default = False)
+    ext_url = ndb.StringProperty()
     comment = ndb.StringProperty()
 
 
@@ -144,10 +146,17 @@ class ViewStreamHandler(webapp2.RequestHandler):
         for img in current_stream.figures[9*(npage-1):]:
             if(current_stream.figures.index(img) > 9*npage - 1):
                 break
-
-            PhotoUrls.append(images.get_serving_url(img.blob_key)+"=s"+str(MAX_IMAGE_LENGTH))
-            print(images.get_serving_url(img.blob_key))
-            PhotoIdList.append(img.blob_key)
+            if(not img.external):
+                PhotoUrls.append(images.get_serving_url(img.blob_key)+"=s"+str(MAX_IMAGE_LENGTH))
+            else:
+                PhotoUrls.append(str(img.ext_url))
+            #print(images.get_serving_url(img.blob_key))
+            if(not img.external):
+                PhotoIdList.append(img.blob_key)
+            else: #use the timestamp as key to delete
+                dtstring = str(img.date)
+                dtkey = re.sub("[^0-9]", "", dtstring)
+                PhotoIdList.append(dtkey)
 
         total_pages = int((current_stream.num_of_pics - 0.001)/9 + 1)
         print("total pages = " + str(total_pages))
@@ -228,10 +237,17 @@ class RefreshHandler(webapp2.RequestHandler):
         for img in current_stream.figures[9*(npage-1):]:
             if(current_stream.figures.index(img) > 9*npage - 1):
                 break
-
-            PhotoUrls.append(images.get_serving_url(img.blob_key)+"=s"+str(MAX_IMAGE_LENGTH))
-            print(images.get_serving_url(img.blob_key))
-            PhotoIdList.append(img.blob_key)
+            if(not img.external):
+                PhotoUrls.append(images.get_serving_url(img.blob_key)+"=s"+str(MAX_IMAGE_LENGTH))
+            else:
+                PhotoUrls.append(str(img.ext_url))
+            #print(images.get_serving_url(img.blob_key))
+            if(not img.external):
+                PhotoIdList.append(img.blob_key)
+            else: #use the timestamp as key to delete
+                dtstring = str(img.date)
+                dtkey = re.sub("[^0-9]", "", dtstring)
+                PhotoIdList.append(dtkey)
 
         total_pages = int((current_stream.num_of_pics - 0.001)/9 + 1)
         print("total pages = " + str(total_pages))
@@ -297,10 +313,15 @@ class GeoView(webapp2.RequestHandler):
         for photo in current_stream.figures:
             print('added photoinfo')
             print(str(photo.date))
-            current_info = {'time':str(photo.date),
+            if(photo.external):
+                photo_url = photo.ext_url
+            else:
+                photo_url = images.get_serving_url(photo.blob_key)
+
+            current_info = {'time':(photo.date),
                             'lng':float(str(photo.location).split(',')[0]),
                             'lat':float(str(photo.location).split(',')[1]),
-                            'url':images.get_serving_url(photo.blob_key)}
+                            'url':photo_url}
             photo_info_list.append(current_info)
             print('added photoinfo')
 
@@ -370,6 +391,14 @@ class DeleteFigHandler(webapp2.RequestHandler):
                 if str(i.blob_key) == fig_key:
                     blobstore.delete(i.blob_key)
                     current_stream.figures.remove(i)
+                    break
+
+                dtstring = str(i.date)
+                dtkey = re.sub("[^0-9]", "", dtstring)
+                if dtkey == fig_key:
+                    current_stream.figures.remove(i)
+
+
         current_stream.num_of_pics -= 1
         current_stream.put()
         time_sleep(NDB_UPDATE_SLEEP_TIME)
@@ -408,6 +437,52 @@ class GenerateUploadUrlHandler(webapp2.RequestHandler):
 
         self.response.out.write(json.dumps({'upload_url':blobstore.create_upload_url('/upload_photo'), 'blob_key':str(bkey)}))
 
+
+class UploadFromExtensionHandler(webapp2.RequestHandler):
+      #
+    def post(self):
+      #  try:
+            self.response.headers['Content-Type'] = 'text/plain'
+            '''
+            user = users.get_current_user()
+            if user is None:
+        # go to login page
+                print("View Stream Handler: Not logged in")
+                self.redirect(users.create_login_page(self.request.uri))
+                return
+            '''
+            print('adding figure')
+            stream_name = self.request.get("streamName")
+            thiscomment = self.request.get("comment")
+            image_url = self.request.get("imageUrl")
+            geoLocation = self.request.get("geoLocation")
+            geoString = geoLocation[1:-1].split(", ")
+            Lat = geoString[0]
+            Lng = geoString[1]
+            print(image_url)
+      # generate arbitrary key: since the blob_key is a combination of chars and numbers, using only numbers can avoid overlapping
+            dt = datetime.now()
+            print(dt)
+
+
+            user_photo = image(owner = None,blob_key=None, comment = thiscomment, ext_url = str(image_url),
+                           external = True, location=ndb.GeoPt(float(Lat),float(Lng)))
+            user_photo.put()
+        #seems redundant to fetch the stream
+            stream_list = stream.query(stream.name == stream_name).fetch(1)
+            current_stream = stream_list[0]
+
+            if current_stream:
+                current_stream.figures.insert(0,user_photo)
+                current_stream.num_of_pics = len(current_stream.figures)
+
+                current_stream.last_modified = str(dt.replace(microsecond = (dt.microsecond / 1000000) * 1000000))[:-3]
+                current_stream.put()
+
+            self.response.out.write(json.dumps({'msg':'success'}))
+      #  except:
+       #     self.error(500)
+
 class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
     def post(self):
        # self.redirect('/management')
@@ -416,7 +491,7 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             upload = self.get_uploads()[0]
             print ("PhotoUploadHandler: upload resized")
             stream_name = self.request.get("stream_name")
-            picloc=ndb.GeoPt(-57.32652122521709+114.65304245043419*random.random(),-123.046875+246.09375*random.random())
+           # picloc=ndb.GeoPt(-57.32652122521709+114.65304245043419*random.random(),-123.046875+246.09375*random.random())
             user_photo = image(owner=users.get_current_user().user_id(),
                                    blob_key=upload.key(),comment = None,location = picloc)
             user_photo.put()

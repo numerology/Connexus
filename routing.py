@@ -23,6 +23,7 @@ routes = [
   # YW: Add autocomplete handler
     webapp2.Route(r'/api/autocomplete', handler=AutoCompleteHandler, name='autocomplete'),
     webapp2.Route(r'/api/build_completion_index', handler=BuildCompletionIndexHandler, name='build_completion_index'),
+    webapp2.Route(r'/api/upload_image_from_extension', handler = UploadFromExtensionHandler),
 
     webapp2.Route(r'/', handler = MainPage, name = 'mainpage'),
     webapp2.Route(r'/management', handler = ManagementHandler, name = 'management'),
@@ -42,6 +43,7 @@ routes = [
     webapp2.Route(r'/upload_fig', handler = UploadHandler, name = 'uploadpage'),
     webapp2.Route('/upload_photo', handler = PhotoUploadHandler, name = 'uploadapi'),
     webapp2.Route('/generate_upload_url/<stream_id:[\w-]+>', handler = GenerateUploadUrlHandler),
+
     #YW add routing for subscribe pate
     webapp2.Route(r'/subscribe/<stream_id:[\w-]+>', handler = SubscribeStreamHandler, name = 'subscribestream'),
     webapp2.Route(r'/report_trend/<freq:[\w-]+>', handler = TrendReportHandler, name = 'uploadapi')

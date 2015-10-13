@@ -13,7 +13,7 @@
 	<script type="text/javascript" src="http://cdn.aldu.net/google.maps.markerclusterer/2.0.6/markerclusterer.js"></script>
     <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/jquery-ui-map/3.0-rc1/jquery.ui.map.js"></script>
     <script type="text/javascript">
-
+    var TZoffset = 5;
 
 
     $('document').ready(function() {
@@ -21,6 +21,8 @@
         var lastYear = new Date();
 		lastYear.setFullYear(lastYear.getFullYear() - 1);
 
+		today.setHours(today.getHours() + TZoffset);
+        lastYear.setHours(lastYear.getHours() + TZoffset);
         $( "#range" ).val(lastYear.toDateString() + "--" + today.toDateString());
         $( "#slider-range" ).slider({
             range: true,
@@ -30,20 +32,23 @@
             slide: function( event, ui ) {
                 var left = new Date();
                 left.setDate(left.getDate() - 365 + ui.values[0]);
+                left.setHours(left.getHours() + TZoffset);
                 var right = new Date();
                 right.setDate(right.getDate() - 365 + ui.values[1]);
-
+                right.setHours(right.getHours() + TZoffset);
                 $( "#range" ).val(left.toDateString() + "--" + right.toDateString());
                 //refresh the map
                 $('#map_canvas').gmap('clear', 'markers');
                 {% for photo_info in photo_info_list %}
                     console.log('right: '+right);
                     console.log('left(ms): '+left.getTime());
+                    console.log('photo_time = '+'{{photo_info['time']}}');
 
                     current_time = new Date('{{photo_info['time']}}');
                     console.log('this: '+current_time);
                     console.log('this(ms): '+current_time.getTime());
                     if(current_time.getTime()<right.getTime() && current_time.getTime()>left.getTime()){
+                   // if(true){
                         console.log('adding');
                         $('#map_canvas').gmap('addMarker', {
                             'position': new google.maps.LatLng({{photo_info['lng']}},{{photo_info['lat']}})
@@ -66,7 +71,8 @@
 	        var latSpan = northEast.lat() - southWest.lat();
 	        var currentDate;
 	        console.log('binding behave of map');
-
+            console.log(southWest.toString());
+            console.log(northEast.toString());
 	        {% for photo_info in photo_info_list %}
                 console.log(new Date('{{photo_info['time']}}'));
                 current_time = new Date('{{photo_info['time']}}');

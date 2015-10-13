@@ -183,7 +183,9 @@
 							<div class = "img">
 						        <img src = "{{url}}">
 							</div>
+							{% if show_upload %}
 							<a class="btn btn-primary btn-sm" href="/api/delete_fig/{{stream.key.id()}}/{{fig_id_list[loop.index - 1]}}"> Delete</a>
+							{% endif %}
 				      	</td>
 				      {% if loop.index%3==0 %}
 				      	</tr>
