@@ -10,3 +10,7 @@ cron:
 - description: daily
   url: /report_trend/4
   schedule: every day 00:00
+
+- description: build completion index
+  url: /api/build_completion_index
+  schedule: every 5 mins

@@ -1,0 +1,30 @@
+/*ref: https://gist.github.com/daz/2168334  https://gist.github.com/salilpa/2e7f40ac5358c32f9b20*/
+<style>
+    .ui-autocomplete {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      z-index: 2000;
+      float: left;
+      display: none;
+      min-width: 160px;
+       padding: 4px 0;
+      margin: 2px 0 0 0;
+      list-style: none;
+      background-color: #ffffff;
+    }
+    .ui-menu-item{
+      display: block;
+      padding: 3px 15px;
+      clear: both;
+      font-weight: normal;
+      line-height: 18px;
+      color: #555555;
+      white-space: nowrap;
+    }
+    .ui-state-focus {
+      color: #000000;
+      text-decoration: none;
+      background-color: #AAAAAA;
+    }
+</style>

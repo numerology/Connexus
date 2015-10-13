@@ -1,5 +1,7 @@
 __author__ = 'Jiaxiao Zheng'
 
+from handlers.AutoCompleteHandler import *
+from handlers.BuildCompletionIndexHandler import *
 from handlers.handlers import *
 from handlers.api_handler import *
 from handlers.api_handler import image
@@ -16,7 +18,10 @@ routes = [
     webapp2.Route(r'/api/delete_fig/<id:[\w-]+>/<fig_key:[\S-]+>', handler = DeleteFigHandler, name = 'delete_api'),
     webapp2.Route(r'/api/delete_fig_partial/<id:[\w-]+>/<fig_key:[\S-]+>', handler = MiniDeleteFigHandler, name = 'delete_api'),
     webapp2.Route(r'/api/unsubscribe_stream', handler = UnsubscribeStreamHandler, name = 'unsubscribe_api'),
-    
+  # YW: Add autocomplete handler
+    webapp2.Route(r'/api/autocomplete', handler=AutoCompleteHandler, name='autocomplete'),
+    webapp2.Route(r'/api/build_completion_index', handler=BuildCompletionIndexHandler, name='build_completion_index'),
+
     webapp2.Route(r'/', handler = MainPage, name = 'mainpage'),
     webapp2.Route(r'/management', handler = ManagementHandler, name = 'management'),
     webapp2.Route(r'/stream_create', handler = CstreamHandler, name = 'createstream'),
@@ -37,6 +42,6 @@ routes = [
     webapp2.Route('/generate_upload_url/<stream_id:[\w-]+>', handler = GenerateUploadUrlHandler),
     #YW add routing for subscribe pate
     webapp2.Route(r'/subscribe/<stream_id:[\w-]+>', handler = SubscribeStreamHandler, name = 'subscribestream'),
-    webapp2.Route(r'/report_trend/<freq:[\w-]+>', handler = TrendReportHandler, name = 'uploadapi')
+    webapp2.Route(r'/report_trend/<freq:[\w-]+>', handler = TrendReportHandler, name = 'uploadapi'),
 ]
 app = webapp2.WSGIApplication(routes = routes, debug = True)
