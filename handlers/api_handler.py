@@ -471,15 +471,17 @@ class UploadFromExtensionHandler(webapp2.RequestHandler):
         #seems redundant to fetch the stream
             stream_list = stream.query(stream.name == stream_name).fetch(1)
             current_stream = stream_list[0]
-
+            returnmessage = "failed!"
+            added = "false"
             if current_stream:
-                current_stream.figures.insert(0,user_photo)
+                returnmessage = "success"
+                added = "true"
+                current_stream.figures.insert(0, user_photo)
                 current_stream.num_of_pics = len(current_stream.figures)
 
                 current_stream.last_modified = str(dt.replace(microsecond = (dt.microsecond / 1000000) * 1000000))[:-3]
                 current_stream.put()
-
-            self.response.out.write(json.dumps({'msg':'success'}))
+            self.response.out.write(json.dumps({"msg": returnmessage, "added": added}))
       #  except:
        #     self.error(500)
 
