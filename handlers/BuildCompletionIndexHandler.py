@@ -32,7 +32,7 @@ class BuildCompletionIndexHandler(webapp2.RequestHandler):
 def extract_stream_keywords(temp_stream):
     raw_keywords = []
     if temp_stream:
-        raw_keywords.extend(filter(None, re.split(r'[,;\t\r\n\s]',str(temp_stream.name))))
+        raw_keywords.extend(filter(None, re.split(r'[,;\t\r\n\s]', str(temp_stream.name))))
         raw_keywords.extend(temp_stream.tags)
     # print set(raw_keywords)
     # print constants.CACHED_STOP_WORDS
