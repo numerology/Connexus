@@ -2,10 +2,11 @@ from google.appengine.api import users, files, images
 from google.appengine.ext import blobstore
 import webapp2
 import operator
-from google.appengine.ext import ndb
+from api_handler import *
+
 import jinja2
 import os
-from api_handler import *
+
 
 
 JINJA_ENVIRONMENT = jinja2.Environment(

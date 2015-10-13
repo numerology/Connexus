@@ -42,6 +42,6 @@ routes = [
     webapp2.Route('/generate_upload_url/<stream_id:[\w-]+>', handler = GenerateUploadUrlHandler),
     #YW add routing for subscribe pate
     webapp2.Route(r'/subscribe/<stream_id:[\w-]+>', handler = SubscribeStreamHandler, name = 'subscribestream'),
-    webapp2.Route(r'/report_trend/<freq:[\w-]+>', handler = TrendReportHandler, name = 'uploadapi'),
+    webapp2.Route(r'/report_trend/<freq:[\w-]+>', handler = TrendReportHandler, name = 'uploadapi')
 ]
 app = webapp2.WSGIApplication(routes = routes, debug = True)
