@@ -16,9 +16,16 @@ from time import sleep as time_sleep
 import re  # used to parse list of emails
 from google.appengine.api import mail  # mailing functions in invitation, notification
 import logging
-import handlers
-from google.appengine.api import urlfetch
+
+
+import random
+
+
+import json
+
+
 from math import ceil as connexus_ceil
+
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__),'../templates')),
@@ -50,6 +57,8 @@ class image(ndb.Model):
     date = ndb.DateTimeProperty(auto_now_add = True)
     location = ndb.GeoPtProperty(required=True, default=ndb.GeoPt(0,0))
     blob_key = ndb.BlobKeyProperty()
+    external = ndb.BooleanProperty(default = False)
+    ext_url = ndb.StringProperty()
     comment = ndb.StringProperty()
 
 
@@ -137,10 +146,17 @@ class ViewStreamHandler(webapp2.RequestHandler):
         for img in current_stream.figures[9*(npage-1):]:
             if(current_stream.figures.index(img) > 9*npage - 1):
                 break
-
-            PhotoUrls.append(images.get_serving_url(img.blob_key)+"=s"+str(MAX_IMAGE_LENGTH))
-            print(images.get_serving_url(img.blob_key))
-            PhotoIdList.append(img.blob_key)
+            if(not img.external):
+                PhotoUrls.append(images.get_serving_url(img.blob_key)+"=s"+str(MAX_IMAGE_LENGTH))
+            else:
+                PhotoUrls.append(str(img.ext_url))
+            #print(images.get_serving_url(img.blob_key))
+            if(not img.external):
+                PhotoIdList.append(img.blob_key)
+            else: #use the timestamp as key to delete
+                dtstring = str(img.date)
+                dtkey = re.sub("[^0-9]", "", dtstring)
+                PhotoIdList.append(dtkey)
 
         total_pages = int((current_stream.num_of_pics - 0.001)/9 + 1)
         print("total pages = " + str(total_pages))
@@ -191,6 +207,138 @@ class ViewStreamHandler(webapp2.RequestHandler):
                            'unsubscribe_return_url': unsubscribe_return_url,}
         template = JINJA_ENVIRONMENT.get_template('view_stream.html')
         self.response.write(template.render(template_values))
+
+
+class RefreshHandler(webapp2.RequestHandler):
+    def get(self, id, page):
+        #Now the view is constrained to deliver 3*3 = 9 pics in a single page
+        #so for the ith page, it covers from 9*(i-1) to 9*i-1
+        user = users.get_current_user()
+        if user is None:
+        # go to login page
+            print("View Stream Handler: Not logged in")
+            self.redirect(users.create_login_page(self.request.uri))
+            return
+        if page is None:
+            page = 1 #by default the 1st page
+
+        PhotoUrls = []
+        PhotoIdList = []
+        # all_stream = stream.query()
+        current_stream = stream.get_by_id(int(id))
+
+
+
+        current_stream.num_of_view = len(current_stream.views)
+        current_stream.put()
+
+      #  nviews = Num_Of_Views[id]
+        npage = int(page)
+        for img in current_stream.figures[9*(npage-1):]:
+            if(current_stream.figures.index(img) > 9*npage - 1):
+                break
+            if(not img.external):
+                PhotoUrls.append(images.get_serving_url(img.blob_key)+"=s"+str(MAX_IMAGE_LENGTH))
+            else:
+                PhotoUrls.append(str(img.ext_url))
+            #print(images.get_serving_url(img.blob_key))
+            if(not img.external):
+                PhotoIdList.append(img.blob_key)
+            else: #use the timestamp as key to delete
+                dtstring = str(img.date)
+                dtkey = re.sub("[^0-9]", "", dtstring)
+                PhotoIdList.append(dtkey)
+
+        total_pages = int((current_stream.num_of_pics - 0.001)/9 + 1)
+        print("total pages = " + str(total_pages))
+        url_pages = []
+        for i in range(1,total_pages+1):
+            url_pages.append('/view/'+id+'/'+str(i))
+
+
+      #  Add subscribe button
+        """show message if owner or already subscribed; show button if not subscribed"""
+        no_subscribe_message = "None"
+        show_subscribe_button = True
+        show_unsubscribe_button = False
+        subscribe_return_url = self.request.uri
+        unsubscribe_return_url = self.request.uri
+        show_upload = False
+        upload_url = blobstore.create_upload_url('/upload_photo')
+        if user.user_id() == current_stream.owner:
+        # The user owns the stream
+            print "ViewStreamHandler: User owns the stream, no need to subscribe"
+            show_subscribe_button = False
+            no_subscribe_message = "You are the owner of the Stream"
+            show_upload = True
+        already_subscribed = False  # show Already Subscribed message instead of showing a button for subscribe
+        for temp_user in current_stream.subscribers:  # this for loop is used to check the id of users
+            if user.user_id() == temp_user.user_id():
+                already_subscribed = True
+                break
+        if already_subscribed:
+            show_subscribe_button = False
+            show_unsubscribe_button = True
+            no_subscribe_message = "You've already subscribed to the stream"
+
+        template_values = {'String1': current_stream.name,
+                           'url_list': PhotoUrls,
+                           'fig_id_list': PhotoIdList,
+                           'url_pages' : url_pages,
+                           'num_of_pages': total_pages,
+                           'nviews':current_stream.num_of_view,
+                           'stream': current_stream,
+                           'logout_url': users.create_logout_url('/'),
+                           'no_subscribe_message': no_subscribe_message,
+                           'show_subscribe_button': show_subscribe_button,
+                           'show_unsubscribe_button': show_unsubscribe_button,
+                           'show_upload': show_upload,
+                           'upload_url':upload_url,
+                           'subscribe_return_url': subscribe_return_url,
+                           'unsubscribe_return_url': unsubscribe_return_url,}
+        template = JINJA_ENVIRONMENT.get_template('refresh.html')
+        self.response.write(template.render(template_values))
+
+class GeoView(webapp2.RequestHandler):
+    def get(self,id):
+
+        user = users.get_current_user()
+        if user is None:
+        # go to login page
+            print("View Stream Handler: Not logged in")
+            self.redirect(users.create_login_page(self.request.uri))
+            return
+        photo_info_list = []
+        current_stream = stream.get_by_id(int(id))
+        for photo in current_stream.figures:
+            print('added photoinfo')
+            print(str(photo.date))
+            if(photo.external):
+                photo_url = photo.ext_url
+            else:
+                photo_url = images.get_serving_url(photo.blob_key)
+
+            current_info = {'time':(photo.date),
+                            'lng':float(str(photo.location).split(',')[0]),
+                            'lat':float(str(photo.location).split(',')[1]),
+                            'url':photo_url}
+            photo_info_list.append(current_info)
+            print('added photoinfo')
+
+        template_values = {'photo_info_list':photo_info_list,
+                           'String1':current_stream.name
+                           }
+        template = JINJA_ENVIRONMENT.get_template('geoview.html')
+        self.response.write(template.render(template_values))
+
+class GeoViewFetch(webapp2.RequestHandler):
+    def get(self,stream_id):
+        self.response.headers['Content-Type'] = 'text/plain'
+        current_stream = stream.get_by_id(int(stream_id))
+        bkey = current_stream.figures[0].blob_key
+
+        self.response.out.write(json.dumps({'upload_url':blobstore.create_upload_url('/upload_photo'), 'blob_key':str(bkey)}))
+
 
 class DefaultViewStreamHandler(webapp2.RequestHandler):
     def get(self,id):
@@ -243,12 +391,97 @@ class DeleteFigHandler(webapp2.RequestHandler):
                 if str(i.blob_key) == fig_key:
                     blobstore.delete(i.blob_key)
                     current_stream.figures.remove(i)
+                    break
+
+                dtstring = str(i.date)
+                dtkey = re.sub("[^0-9]", "", dtstring)
+                if dtkey == fig_key:
+                    current_stream.figures.remove(i)
+
+
         current_stream.num_of_pics -= 1
         current_stream.put()
         time_sleep(NDB_UPDATE_SLEEP_TIME)
         self.redirect('/view/'+id+'/1')
         return
 
+class MiniDeleteFigHandler(webapp2.RequestHandler):
+    def get(self, id, fig_key):
+        user = users.get_current_user()
+        if user is None:
+        # go to login page
+            print("View Stream Handler: Not logged in")
+            self.redirect(users.create_login_page(self.request.uri))
+            return
+
+
+        current_stream = stream.get_by_id(int(id))
+        if current_stream:
+            #delete all the imgs, because they are huge
+            for i in current_stream.figures:
+                if str(i.blob_key) == fig_key:
+                    blobstore.delete(i.blob_key)
+                    current_stream.figures.remove(i)
+        current_stream.num_of_pics -= 1
+        current_stream.put()
+        time_sleep(NDB_UPDATE_SLEEP_TIME)
+
+        return
+
+class GenerateUploadUrlHandler(webapp2.RequestHandler):
+      #
+    def get(self, stream_id):
+        self.response.headers['Content-Type'] = 'text/plain'
+        current_stream = stream.get_by_id(int(stream_id))
+        bkey = current_stream.figures[0].blob_key
+
+        self.response.out.write(json.dumps({'upload_url':blobstore.create_upload_url('/upload_photo'), 'blob_key':str(bkey)}))
+
+
+class UploadFromExtensionHandler(webapp2.RequestHandler):
+      #
+    def post(self):
+      #  try:
+            self.response.headers['Content-Type'] = 'text/plain'
+            '''
+            user = users.get_current_user()
+            if user is None:
+        # go to login page
+                print("View Stream Handler: Not logged in")
+                self.redirect(users.create_login_page(self.request.uri))
+                return
+            '''
+            print('adding figure')
+            stream_name = self.request.get("streamName")
+            thiscomment = self.request.get("comment")
+            image_url = self.request.get("imageUrl")
+            geoLocation = self.request.get("geoLocation")
+            geoString = geoLocation[1:-1].split(", ")
+            Lat = geoString[0]
+            Lng = geoString[1]
+            print(image_url)
+      # generate arbitrary key: since the blob_key is a combination of chars and numbers, using only numbers can avoid overlapping
+            dt = datetime.now()
+            print(dt)
+
+
+            user_photo = image(owner = None,blob_key=None, comment = thiscomment, ext_url = str(image_url),
+                           external = True, location=ndb.GeoPt(float(Lat),float(Lng)))
+            user_photo.put()
+        #seems redundant to fetch the stream
+            stream_list = stream.query(stream.name == stream_name).fetch(1)
+            current_stream = stream_list[0]
+
+            if current_stream:
+                current_stream.figures.insert(0,user_photo)
+                current_stream.num_of_pics = len(current_stream.figures)
+
+                current_stream.last_modified = str(dt.replace(microsecond = (dt.microsecond / 1000000) * 1000000))[:-3]
+                current_stream.put()
+
+            self.response.out.write(json.dumps({'msg':'success'}))
+      #  except:
+       #     self.error(500)
 
 class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
     def post(self):
@@ -258,8 +491,9 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             upload = self.get_uploads()[0]
             print ("PhotoUploadHandler: upload resized")
             stream_name = self.request.get("stream_name")
+           # picloc=ndb.GeoPt(-57.32652122521709+114.65304245043419*random.random(),-123.046875+246.09375*random.random())
             user_photo = image(owner=users.get_current_user().user_id(),
-                                   blob_key=upload.key(),comment = None)
+                                   blob_key=upload.key(),comment = None,location = picloc)
             user_photo.put()
             queried_stream = stream.query(stream.name == stream_name).get()
             if queried_stream:
@@ -274,6 +508,10 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             self.redirect('/view/%s' % queried_stream.key.id())
         except:
             self.error(500)
+
+
+
+
 
 
 class CreateStreamHandler(webapp2.RequestHandler):
@@ -592,12 +830,15 @@ def parse_search_keyword(key_word_string):
                 'tags':[]}  # YW: Can extend to contain @user search later
     keywords['tags'] = re.findall('#[A-Za-z0-9]+', key_word_string)
     print ('parse_search_keyword: tags: ' + " ".join(keywords['tags']))
+    # print key_word_string
     original_words = filter(None, re.split(r'[,;\t\n\r\s]', key_word_string))
-    plain_keyword_reg = re.compile(r"^[A-Za-z0-9]+[A-Za-z0-9\'-_]+$")  # YW: allow prime and hyphen
+    # print original_words
+    plain_keyword_reg = re.compile(r"[A-Za-z0-9\'\-_]+")  # YW: allow prime and hyphen
+    plain_keyword_reg_start = re.compile(r"^[A-Za-z0-9]+")
     # tags_reg = re.compile('^#[a-zA-Z0-9]+$')
     for word in original_words:
-        print word
-        if plain_keyword_reg.match(word):
+        # print word
+        if plain_keyword_reg.match(word) and plain_keyword_reg_start.match(word):
             keywords['plain_keywords'].append(word)
     print ('parse_search_keyword: plain keywords: ' + " ".join(keywords['plain_keywords']))
     return keywords
@@ -614,21 +855,16 @@ class SearchHandler(webapp2.RequestHandler):
         queried_streams = []
         if queried_keywords:
             # allow to check matching part of the string
-            all_streams = stream.query()
+            all_streams = stream.query().order(-stream.num_of_view, -stream.num_of_pics)
             for temp_stream in all_streams:
-                temp_stream_name_words = filter(None, re.split(r'[\s]',temp_stream.name))
-                print ('Splited Stream Name: ' + "/".join(temp_stream_name_words))
-                if any(name_word in temp_stream_name_words for name_word in keywords['plain_keywords']):
-                    queried_streams.append(temp_stream)
-                else:
-                    temp_stream_tags = temp_stream.tags
-                    if any(tag in temp_stream_tags for tag in keywords['tags']):
-                        queried_streams.append(temp_stream)
+                temp_stream_words = []
+                temp_stream_words.extend(filter(None, re.split(r'[\s]',temp_stream.name)))
+                temp_stream_words.extend(temp_stream.tags)
+                temp_stream_string = " ".join(list(set(temp_stream_words) - constants.CACHED_STOP_WORDS)).lower()
+                if any(temp_keyword.lower() in temp_stream_string for temp_keyword in queried_keywords):
+                    queried_streams.append(temp_stream) 
                 if len(queried_streams) == MAX_RESULT_NUM:
                     break
-            
-            #queried_streams = stream.query(ndb.OR(stream.name.IN(queried_keywords), 
-            #                                      stream.tags.IN(queried_keywords))).fetch(MAX_RESULT_NUM)
         print ('SearchHandler: set of key words: ' + "/".join(queried_keywords))
         template_values = {'original_keyword_string': original_keyword_string,
                            'queried_keywords': queried_keywords,
