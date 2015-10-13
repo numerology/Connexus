@@ -24,20 +24,32 @@ def parsegeolocation(geostring):
 
 class ExtensionUploadHandler(webapp2.RequestHandler):
     def post(self):
-        streamname = str(self.request.get("streamName"))
+        stream_name = str(self.request.get("streamName"))
         comment = str(self.request.get("comment"))
-        imageurl = str(self.request.get("imageUrl"))
+        image_url = str(self.request.get("imageUrl"))
         geolocation = parsegeolocation(str(self.request.get("geoLocation")))
-        print ("Extension Upload: stream name: " + streamname)
+        print ("Extension Upload: stream name: " + stream_name)
         print ("comment: " + comment)
         # print ("imageUrl: " + imageurl)
         print ("geoLocation: " + str(self.request.get("geoLocation")))
         print ("lat: " + str(geolocation["lat"]) + " lng: " + str(geolocation["lng"]))
-        returnmessage = ""
-        queried_stream = stream.query(stream.name == streamname).get()
+        Lat = geolocation["lat"]
+        Lng = geolocation["lng"]
+        dt = datetime.now()
+        print(dt)
+        added = "false"
+        queried_stream = stream.query(stream.name == stream_name).get()
         if queried_stream:
             returnmessage = "Stream found, image added"
+            added = "true"
+            user_photo = image(owner = None,blob_key=None, comment = comment, ext_url = str(image_url),
+                       external = True, location=ndb.GeoPt(float(Lat), float(Lng)))
+            user_photo.put()
+            queried_stream.figures.insert(0, user_photo)
+            queried_stream.num_of_pics = len(queried_stream.figures)
+            queried_stream.last_modified = str(dt.replace(microsecond = (dt.microsecond / 1000000) * 1000000))[:-3]
+            queried_stream.put()
         else:
             returnmessage = "Stream name not found!"
-        data = {"message": returnmessage}
+        data = {"message": returnmessage, "added": added}
         self.response.write(json.dumps(data, sort_keys=True))

@@ -23,10 +23,10 @@ routes = [
     webapp2.Route(r'/api/unsubscribe_stream', handler = UnsubscribeStreamHandler, name = 'unsubscribe_api'),
   # YW: Add autocomplete handler
     webapp2.Route(r'/api/autocomplete', handler=AutoCompleteHandler, name='autocomplete'),
-    webapp2.Route(r'/api/stream_autocomplete', handler=StreamAutoCompleteHandler, name='streamautocomplete'),  # autocomplete for stream name
+    webapp2.Route(r'/api/stream_autocomplete', handler=StreamAutoCompleteHandler, name='stream_autocomplete'),  # autocomplete for stream name
     webapp2.Route(r'/api/build_completion_index', handler=BuildCompletionIndexHandler, name='build_completion_index'),
 
-    webapp2.Route(r'/api/upload_image_from_extension', handler = UploadFromExtensionHandler),
+    webapp2.Route(r'/api/upload_image_from_extension', handler=ExtensionUploadHandler, name='extension_uploader'),
 
 
     webapp2.Route(r'/', handler = MainPage, name = 'mainpage'),
