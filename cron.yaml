@@ -13,4 +13,4 @@ cron:
 
 - description: build completion index
   url: /api/build_completion_index
-  schedule: every 5 mins
+  schedule: every 1 mins

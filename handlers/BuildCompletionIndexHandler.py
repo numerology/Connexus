@@ -9,7 +9,7 @@ import re
 
 
 class BuildCompletionIndexHandler(webapp2.RequestHandler):
-    def post(self):
+    def get(self):
         print "Run BuildCompletionIndexHandler"
         keywords = []
         known_keywords = set()
