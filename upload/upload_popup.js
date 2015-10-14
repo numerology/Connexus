@@ -1,8 +1,8 @@
 var _marker = 0;
 var _map;
 var austin = {lat: 30.25, lng: -97.75};
-var STREAM_AUTOCOMPLETE_URL = "http://localhost:8080/api/stream_autocomplete";
-var UPLOAD_URL = "http://localhost:8080/api/upload_image_from_extension";
+var STREAM_AUTOCOMPLETE_URL = "http://just-plate-107116.appspot.com/api/stream_autocomplete";
+var UPLOAD_URL = "http://just-plate-107116.appspot.com/api/upload_image_from_extension";
 
 function showLocation(location){ // show the location of current Marker
    console.log("Show location changes")
