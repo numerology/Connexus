@@ -382,7 +382,8 @@ class DeleteStreamHandler(webapp2.RequestHandler):
         if current_stream:
             #delete all the imgs, because they are huge
             for i in current_stream.figures:
-                blobstore.delete(i.blob_key)
+                if(not i.external):
+                    blobstore.delete(i.blob_key)
             queried_user_profile = user_profile.query(user_profile.user_id == user.user_id()).get()
             if queried_user_profile:
                 if current_stream.name in queried_user_profile.own_streams:
