@@ -1,5 +1,6 @@
 $(document).ready(function(){
     var cache = {};
+
     $("#search_keywords").autocomplete({
         minLength: 1,
         //source: [ "c++", "java", "php", "coldfusion", "javascript", "asp", "ruby" ],
@@ -21,8 +22,8 @@ $(document).ready(function(){
     $('#build_completion_index').on("submit", function(e){
         e.preventDefault();
         $.ajax({
-            url: $(this).attr("action"),
-            type: 'POST',
+            url: '/api/build_completion_index',
+            type: 'GET',
             data: [],
             success: function(data){
                 alert("Build autocomplete index succeed!")

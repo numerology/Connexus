@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 {% autoescape true %}
 <html>
+
     <link href="//bootswatch.com/darkly/bootstrap.min.css" rel="stylesheet">
     <body>
-        <! Add navigation bar>
+        <div class = "navbar navbar-default navbar-fixed-top">
+		<div class = "container-fluid">
         <div class="navbar-header">
           <a href="/management" class="navbar-brand">Connexus</a>
           <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
@@ -34,8 +36,13 @@
             <li><a class="btn btn-primary" href="{{logout_url}}"> Logout</a></li>
           </ul>
         </div>
+		</div>
+		</div>
         <div class="container" align="left">
+			<div class = "page-header">
             <div class="col-lg-8 col-md-7 col-sm-6">
+				<br>
+				<br>
                 <h1>Welcome to Connexus</h1>
                 <form class = "form-horizontal" action = "/api/create_stream" method = "post">
 					    <fieldset>
@@ -73,6 +80,7 @@
 					    </fieldset>
 			    </form>
 		    </div>
+				</div>
 	    </div>
 	</body>
 </html>

@@ -5,155 +5,229 @@
 	<link href="/stylesheets/dropzone.css" rel="stylesheet">
 
 	<head>
-	<meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
-	<script src="https://rawgit.com/enyo/dropzone/master/dist/dropzone.js"></script>
-	<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
-	<script type = "text/javascript">
+		<meta charset="utf-8">
+	    <title>view stream</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
+		<script src="https://rawgit.com/enyo/dropzone/master/dist/dropzone.js"></script>
+		<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+	    <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+	    <script type = "text/javascript">
 
-	var key_dict = [];
-	var _this = null;
-	var flag = true;
-	var uploaded = []
+		var key_dict = [];
+		var _this = null;
+		var flag = true;
+		var uploaded = []
 
-	function sleep(milliseconds) {
-  		var start = new Date().getTime();
-  		for (var i = 0; i < 1e7; i++) {
-    		if ((new Date().getTime() - start) > milliseconds){
-      			break;
-    		}
-  		}
-	}
-
-	$(document).ready(function() {
-		$("#uploadBtn").click(function() {
-			flag = false;
-			console.log('refreshing');
-			sleep(200);
-			if(this!=null){
-				_this.removeAllFiles();
+		function sleep(milliseconds) {
+			var start = new Date().getTime();
+			for (var i = 0; i < 1e7; i++) {
+				if ((new Date().getTime() - start) > milliseconds){
+					break;
+				}
 			}
-			uploaded = [];
-			key_dict = [];
-			$('#content').load('/refresh/{{stream.key.id()}}/1');
-			flag = true; //the flag is used to prevent the backend actually deleting my img
-		});
-	});
+		}
 
-	Dropzone.options.uploader = {
-		url: "{{upload_url}}",
-    	autoProcessQueue: true,
-    	uploadMultiple: true,
-    	parallelUploads: 100,
-    	addRemoveLinks: true,
-    	dictRemoveFile: 'Remove image',
-    	acceptedFiles: 'image/*',
-    	maxFiles: 10,
-  		init: function() {
-			flag = true;
-
-    		this.on("complete", function(file) {
-
-				var upurl = '0';
-    			console.log('Triggering');
-				$.ajax({
-					type: 'get',
-            		url: '/generate_upload_url/{{stream.key.id()}}',
-            		async: false,
-            		success: function(data) {
-            			console.log(data['upload_url']);
-              			//$('#uploader').attr("action",data);
-              			var jsdata = JSON.parse(data);
-              			upurl = jsdata['upload_url'];
-              			console.log("set");
-              			console.log(jsdata['blob_key']);
-              			uploaded.push(file);
-						key_dict.push(jsdata['blob_key']);
-            		},
-        		});
-        		this.options.url = upurl;
-    		});
-
-    		this.on("removedfile", function(file) {
-    			console.log('removing');
-
-    			var index = 0;
-				for (i=0; i<uploaded.length;i++){
-					if(uploaded[i] == file){
-						index = i;
-						break;
+		$(document).ready(function() {
+			var cache = {};
+			$("#search_keywords").autocomplete({
+				minLength: 1,
+				source: function(request, response){
+					var cache = {};
+					var KeywordSet = [];
+					var term = $.ui.autocomplete.escapeRegex(request.term);
+					console.log(term);
+					if(term in cache){
+						response(cache[term]);
+						return;
 					}
-
+					$.getJSON("/api/autocomplete", {"keywords": term}, function(data, status, xhr){
+						cache[term] = data;
+						response(data);
+					})
 				}
-				console.log(index);
-				console.log(flag);
-    			if(flag==true){
-				$.ajax({
-					type: 'get',
-					url: '/api/delete_fig_partial/{{stream.key.id()}}/'+key_dict[index],
-					async: false,
-					success: function(data) {
+			});
+			$("#uploadBtn").click(function() {
+				flag = false;
+				console.log('refreshing');
+				sleep(200);
+				if(this!=null){
+					_this.removeAllFiles();
+				}
+				uploaded = [];
+				key_dict = [];
+				$('#content').load('/refresh/{{stream.key.id()}}/1');
+				flag = true; //the flag is used to prevent the backend actually deleting my img
+			});
+		});
 
-            		},
+		Dropzone.options.uploader = {
+			url: "{{upload_url}}",
+			autoProcessQueue: true,
+			uploadMultiple: true,
+			parallelUploads: 100,
+			addRemoveLinks: true,
+			dictRemoveFile: 'Remove image',
+			acceptedFiles: 'image/*',
+			maxFiles: 10,
+			init: function() {
+				flag = true;
+
+				this.on("complete", function(file) {
+
+					var upurl = '0';
+					console.log('Triggering');
+					$.ajax({
+						type: 'get',
+						url: '/generate_upload_url/{{stream.key.id()}}',
+						async: false,
+						success: function(data) {
+							console.log(data['upload_url']);
+							//$('#uploader').attr("action",data);
+							var jsdata = JSON.parse(data);
+							upurl = jsdata['upload_url'];
+							console.log("set");
+							console.log(jsdata['blob_key']);
+							uploaded.push(file);
+							key_dict.push(jsdata['blob_key']);
+						},
+					});
+					this.options.url = upurl;
 				});
-				}
-    		});
 
-    		_this = this;
-  		}
-	};
+				this.on("removedfile", function(file) {
+					console.log('removing');
+
+					var index = 0;
+					for (i=0; i<uploaded.length;i++){
+						if(uploaded[i] == file){
+							index = i;
+							break;
+						}
+
+					}
+					console.log(index);
+					console.log(flag);
+					if(flag==true){
+					$.ajax({
+						type: 'get',
+						url: '/api/delete_fig_partial/{{stream.key.id()}}/'+key_dict[index],
+						async: false,
+						success: function(data) {
+
+						},
+					});
+					}
+				});
+
+				_this = this;
+			}
+		};
 
 
 
-	</script>
-	<style type="text/css">
-	.crop {
-    	width: 800px;
-    	height: 500px;
-    	overflow: hidden;
-	}
-
-
-	</style>
+		</script>
+		<style type="text/css">
+			.crop {
+				width: 800px;
+				height: 500px;
+				overflow: hidden;
+			}
+			.ui-autocomplete {
+			  max-height: 200px;
+			  overflow-y: auto;
+			  overflow-x: hidden;
+			  padding-right: 20px;
+			  position: absolute;
+			  top: 100%;
+			  left: 0;
+			  z-index: 2000;
+			  float: left;
+			  display: none;
+			  min-width: 160px;
+			  _width: 160px;
+			  padding: 4px 0;
+			  margin: 2px 0 0 0;
+			  list-style: none;
+			  background-color: #ffffff;
+			  border-color: #ccc;
+			  border-color: rgba(0, 0, 0, 0.2);
+			  border-style: solid;
+			  border-width: 1px;
+			  -webkit-border-radius: 5px;
+			  -moz-border-radius: 5px;
+			  border-radius: 5px;
+			  -webkit-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+			  -moz-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+			  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+			  -webkit-background-clip: padding-box;
+			  -moz-background-clip: padding;
+			  background-clip: padding-box;
+			  *border-right-width: 2px;
+			  *border-bottom-width: 2px;
+			}
+			.ui-menu-item{
+			  display: block;
+			  padding: 3px 15px;
+			  clear: both;
+			  font-weight: normal;
+			  line-height: 18px;
+			  color: #555555;
+			  white-space: nowrap;
+			}
+			.ui-state-focus {
+			  color: #000000;
+			  text-decoration: none;
+			  background-color: #AAAAAA;
+			  border-radius: 0px;
+			  -webkit-border-radius: 0px;
+			  -moz-border-radius: 0px;
+			  background-image: none;
+			}
+			.ui-helper-hidden-accessible { display:none; }
+		</style>
 	</head>
 	<body>
 		<div class = "navbar navbar-default navbar-fixed-top">
-		    <div class = "container-fluid">
-		    <div class="navbar-header">
-              <a href="/management" class="navbar-brand">Connexus</a>
-              <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-              </button>
-            </div>
-		    <div class="collapse navbar-collapse" id="navbar-main">
-              <ul class="nav navbar-nav">
-                <li>
-                  <a href="/management">Management</a>
-                </li>
-                <li>
-                  <a href="/stream_list">View All Streams</a>
-                </li>
-			    <li>
-                  <a href="/stream_trending">Trending</a>
-                </li>
+			<div class = "container-fluid">
+			<div class="navbar-header">
+			  <a href="/management" class="navbar-brand">Connexus</a>
+			  <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+			  </button>
+			</div>
+			<div class="collapse navbar-collapse" id="navbar-main">
+			  <ul class="nav navbar-nav">
 				<li>
-                  <a href="/geoview/{{stream.key.id()}}">geoview</a>
-                </li>
-		      </ul>
-		      <form class="navbar-form navbar-left" action="/stream_search"  method="get">
-            	<div class="form-group" align = "center">
-              		<input type="text" class="form-control" name="search_keywords" autocomplete="off">
-				    <input align="center" class = "btn btn-primary" type = "submit" value = "Search">
-            	</div>
-		      </form>
-              <ul class="nav navbar-nav navbar-right">
-                <li><a class="btn btn-primary" href="{{logout_url}}"> Logout    </a></li>
-              </ul>
+				  <a href="/management">Management</a>
+				</li>
+				<li>
+				  <a href="/stream_list">View All Streams</a>
+				</li>
+				<li>
+				  <a href="/stream_trending">Trending</a>
+				</li>
+			  </ul>
+			  <form class="navbar-form navbar-left" action="/stream_search"  method="get" autocomplete="off">
+				<div class="row">
+					<div class="form-group" align = "left">
+						<div class="col-lg-8">
+							<input type="text" class="form-control" placeholder="Type in keywords" name="search_keywords" id="search_keywords">
+						</div>
+						<div class="col-lg-3">
+							<input align="center" class = "btn btn-primary" type = "submit" value = "Search">
+						</div>
+					</div>
+				</div>
+			  </form>
+			  <ul class="nav navbar-nav navbar-right">
+				<li><a class="btn btn-primary" href="{{logout_url}}"> Logout    </a></li>
+			  </ul>
 
-            </div>
-		    </div>
-	    </div>
+			</div>
+			</div>
+		</div>
 		<div class="container">
 			<div class = "page-header">
 		    <div class="col-lg-8 col-md-7 col-sm-6">

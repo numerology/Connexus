@@ -3,7 +3,7 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>{{search_string}}Connexus Search</title>
+	<title>{{original_keyword_string}} Connexus search</title>
 	<link href="//bootswatch.com/darkly/bootstrap.min.css" rel="stylesheet">
 	<script src="//code.jquery.com/jquery-1.10.2.js"></script>
 	<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
@@ -119,7 +119,7 @@
 		            </form>
 		        </div>
 		        <div class="col-lg-3 col-lg-offset-1" align="left">
-		            <form class="form-horizontal" action="/api/build_completion_index" method="post" id="build_completion_index">
+		            <form class="form-horizontal" action="/api/build_completion_index" method="get" id="build_completion_index">
                 		<input align="center" class = "btn btn-primary" type="submit" value="Build Completion Index">
 		            </form>
 		        </div>
