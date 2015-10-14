@@ -99,7 +99,7 @@ $(document).ready(function(){
             success: function(data){
                 var msg = JSON.parse(data);
                 alert(msg.message);
-                if (msg.added){
+                if (msg.added=="true"){
                     console.log("Added");
                     window.close();
                 }
