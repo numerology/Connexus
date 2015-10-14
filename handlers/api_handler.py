@@ -16,6 +16,7 @@ from time import sleep as time_sleep
 import re  # used to parse list of emails
 from google.appengine.api import mail  # mailing functions in invitation, notification
 import logging
+import constants
 
 
 import random
@@ -28,7 +29,7 @@ from math import ceil as connexus_ceil
 
 
 JINJA_ENVIRONMENT = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__),'../templates')),
+    loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), '../templates')),
     extensions=['jinja2.ext.autoescape'],
     autoescape=True)
 
@@ -848,7 +849,7 @@ def parse_search_keyword(key_word_string):
         
 class SearchHandler(webapp2.RequestHandler):
     def get(self):
-        MAX_RESULT_NUM = 5
+        MAX_RESULT_NUM = constants.SEARCH_LENGTH
         original_keyword_string = self.request.get('search_keywords')
         print ('SearchHandler: original string: '+original_keyword_string)
         keywords = parse_search_keyword(original_keyword_string)
@@ -860,7 +861,7 @@ class SearchHandler(webapp2.RequestHandler):
             all_streams = stream.query().order(-stream.num_of_view, -stream.num_of_pics)
             for temp_stream in all_streams:
                 temp_stream_words = []
-                temp_stream_words.extend(filter(None, re.split(r'[\s]',temp_stream.name)))
+                temp_stream_words.extend(filter(None, re.split(r'[\s]', temp_stream.name)))
                 temp_stream_words.extend(temp_stream.tags)
                 temp_stream_string = " ".join(list(set(temp_stream_words) - constants.CACHED_STOP_WORDS)).lower()
                 if any(temp_keyword.lower() in temp_stream_string for temp_keyword in queried_keywords):

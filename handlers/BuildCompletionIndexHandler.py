@@ -32,8 +32,11 @@ class BuildCompletionIndexHandler(webapp2.RequestHandler):
 def extract_stream_keywords(temp_stream):
     raw_keywords = []
     if temp_stream:
-        raw_keywords.extend(filter(None, re.split(r'[,;\t\r\n\s]', str(temp_stream.name))))
+        raw_keywords.extend(filter(None, re.split(r'[ ,;\t\r\n\s]', str(temp_stream.name))))
         raw_keywords.extend(temp_stream.tags)
+        #for temp_image in temp_stream.figures:
+        #    if temp_image.comment:
+        #        raw_keywords.extend(filter(None, re.split(r'[ ,;\t\r\n\s]', str(temp_image.comment))))
     # print set(raw_keywords)
     # print constants.CACHED_STOP_WORDS
     keywords = list(set(raw_keywords)-constants.CACHED_STOP_WORDS)

@@ -10,6 +10,9 @@ AUTO_COMPLETE_LENGTH = 10
 
 STREAM_AUTO_COMPLETE_LENGTH = 5
 
+SEARCH_LENGTH = 5
+
+
 class CompletionIndex(ndb.Model):
     keywords = ndb.StringProperty(repeated=True, indexed=False)
 
