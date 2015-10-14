@@ -9,7 +9,7 @@ body{
 #output{
     width: 400px;
     margin-left:30px;
-    /*display: none;*/
+    display: none;
 }
 #image{
     margin-left: 20px;
@@ -104,3 +104,8 @@ body{
     background-image: none;
 }
 .ui-helper-hidden-accessible { display:none; }
+input[id="stream_name"].ui-autocomplete-loading{
+    background: url('/images/loading_spinner.gif');
+    background-repeat: no-repeat;
+    background-position: right center;
+}

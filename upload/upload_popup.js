@@ -2,7 +2,7 @@ var _marker = 0;
 var _map;
 var austin = {lat: 30.25, lng: -97.75};
 var STREAM_AUTOCOMPLETE_URL = "http://localhost:8080/api/stream_autocomplete";
-var UPLOAD_URL = "http://localhost:8080/api/extension_upload";
+var UPLOAD_URL = "http://localhost:8080/api/upload_image_from_extension";
 
 function showLocation(location){ // show the location of current Marker
    console.log("Show location changes")
@@ -62,7 +62,6 @@ document.addEventListener("DOMContentLoaded", function(){
 $(document).ready(function(){
     console.log("Page ready");
     var cache = {};
-    var upurl
     $("#stream_name").autocomplete({
         minLength: 1,
         /*source: [ "c++", "java", "php", "coldfusion", "javascript", "asp", "ruby" ]*/
@@ -75,13 +74,12 @@ $(document).ready(function(){
                 response(cache[term]);
                 return;
             }
-            $.getJSON("http://localhost:8080/api/stream_autocomplete", {"keywords": term}, function(data, status, xhr){
+            $.getJSON(STREAM_AUTOCOMPLETE_URL, {"keywords": term}, function(data, status, xhr){
                 cache[term] = data;
                 response(data);
             })
         }
     });
-
     $("#upload_form").on("submit", function(e){
         e.preventDefault();
         var streamName = $("#stream_name").val();
@@ -90,20 +88,24 @@ $(document).ready(function(){
         var geoLocation = $("#geo_location").val();
         console.log("Submit image url: "+imageUrl);
         $.ajax({
-            url: "http://localhost:8080/api/upload_image_from_extension",
+            url: UPLOAD_URL,
             type: "POST",
             data: {"streamName": streamName,
                    "comment": comment,
                    "imageUrl": imageUrl,
                    "geoLocation": geoLocation},
             success: function(data){
-             //   var msg = JSON.parse(data);
-                alert('success');
+                var msg = JSON.parse(data);
+                alert(msg.message);
+                if (msg.added){
+                    console.log("Added");
+                    window.close();
+                }
             }
         });
     });
     $("#map_canvas").gmap({
-            zoom: 10,
+            zoom: 2,
             /*center: austin,*/
             mapTypeId: google.maps.MapTypeId.TERRAN
         }, function(){

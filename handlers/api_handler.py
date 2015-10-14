@@ -115,10 +115,15 @@ class ViewStreamHandler(webapp2.RequestHandler):
         if page is None:
             page = 1 #by default the 1st page
 
+
+
         PhotoUrls = []
         PhotoIdList = []
         # all_stream = stream.query()
         current_stream = stream.get_by_id(int(id))
+        if(not current_stream):
+            self.redirect("/error/" + 'Wrong stream or page number')
+            return
         if not str(user.user_id()) == current_stream.owner:
 
             now_time = view_counter()
@@ -144,6 +149,10 @@ class ViewStreamHandler(webapp2.RequestHandler):
 
       #  nviews = Num_Of_Views[id]
         npage = int(page)
+        if(not current_stream.num_of_pics>9*(npage-1) and (not (current_stream.num_of_pics==0 and npage ==1))):
+            self.redirect("/error/" + 'Wrong stream or page number')
+            return
+
         for img in current_stream.figures[9*(npage-1):]:
             if(current_stream.figures.index(img) > 9*npage - 1):
                 break
@@ -309,8 +318,14 @@ class GeoView(webapp2.RequestHandler):
             print("View Stream Handler: Not logged in")
             self.redirect(users.create_login_page(self.request.uri))
             return
+
+
         photo_info_list = []
         current_stream = stream.get_by_id(int(id))
+        if(not current_stream):
+            self.redirect("/error/" + 'Wrong stream or page number')
+            return
+
         for photo in current_stream.figures:
             print('added photoinfo')
             print(str(photo.date))
@@ -327,12 +342,14 @@ class GeoView(webapp2.RequestHandler):
             print('added photoinfo')
 
         template_values = {'photo_info_list':photo_info_list,
-                           'String1':current_stream.name
+                           'String1':current_stream.name,
+                           'stream_id':current_stream.key.id()
                            }
         template = JINJA_ENVIRONMENT.get_template('geoview.html')
         self.response.write(template.render(template_values))
 
 class GeoViewFetch(webapp2.RequestHandler):
+    #TODO: Deprecate
     def get(self,stream_id):
         self.response.headers['Content-Type'] = 'text/plain'
         current_stream = stream.get_by_id(int(stream_id))
@@ -356,7 +373,12 @@ class DeleteStreamHandler(webapp2.RequestHandler):
             return
 
 
+
         current_stream = stream.get_by_id(int(id))
+        if(not current_stream):
+            self.redirect("/error/" + 'Wrong stream or page number')
+            return
+
         if current_stream:
             #delete all the imgs, because they are huge
             for i in current_stream.figures:
@@ -385,20 +407,33 @@ class DeleteFigHandler(webapp2.RequestHandler):
             return
 
 
+
+
         current_stream = stream.get_by_id(int(id))
+        if(not current_stream):
+            self.redirect("/error/" + 'Wrong stream or page number')
+            return
+
+        flag = False
         if current_stream:
             #delete all the imgs, because they are huge
             for i in current_stream.figures:
                 if str(i.blob_key) == fig_key:
                     blobstore.delete(i.blob_key)
                     current_stream.figures.remove(i)
+                    flag = True
                     break
 
                 dtstring = str(i.date)
                 dtkey = re.sub("[^0-9]", "", dtstring)
                 if dtkey == fig_key:
                     current_stream.figures.remove(i)
+                    flag = True
+                    break
 
+        if(not flag):
+            self.redirect("/error/" + 'Designated fig does not exist')
+            return
 
         current_stream.num_of_pics -= 1
         current_stream.put()
@@ -416,13 +451,25 @@ class MiniDeleteFigHandler(webapp2.RequestHandler):
             return
 
 
+
         current_stream = stream.get_by_id(int(id))
+        if(not current_stream):
+            self.redirect("/error/" + 'Wrong stream or page number')
+            return
+
+        flag = False
         if current_stream:
             #delete all the imgs, because they are huge
             for i in current_stream.figures:
                 if str(i.blob_key) == fig_key:
                     blobstore.delete(i.blob_key)
                     current_stream.figures.remove(i)
+                    flag = True
+                    break
+
+        if(not flag):
+            self.redirect("/error/" + 'Designated fig does not exist')
+            return
         current_stream.num_of_pics -= 1
         current_stream.put()
         time_sleep(NDB_UPDATE_SLEEP_TIME)
@@ -494,7 +541,7 @@ class PhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             upload = self.get_uploads()[0]
             print ("PhotoUploadHandler: upload resized")
             stream_name = self.request.get("stream_name")
-           # picloc=ndb.GeoPt(-57.32652122521709+114.65304245043419*random.random(),-123.046875+246.09375*random.random())
+            picloc=ndb.GeoPt(-57.32652122521709+114.65304245043419*random.random(),-123.046875+246.09375*random.random())
             user_photo = image(owner=users.get_current_user().user_id(),
                                    blob_key=upload.key(),comment = None,location = picloc)
             user_photo.put()
