@@ -19,6 +19,9 @@
     $('document').ready(function() {
         var today = new Date();
         var lastYear = new Date();
+        var _map;
+        var markers = [];
+        var markerCluster;
 		lastYear.setFullYear(lastYear.getFullYear() - 1);
 
 		today.setHours(today.getHours() + TZoffset);
@@ -39,6 +42,7 @@
                 $( "#range" ).val(left.toDateString() + "--" + right.toDateString());
                 //refresh the map
                 $('#map_canvas').gmap('clear', 'markers');
+                $('#map_canvas').gmap('get', 'MarkerClusterer').clearMarkers();
                 {% for photo_info in photo_info_list %}
                     console.log('right: '+right);
                     console.log('left(ms): '+left.getTime());
@@ -57,7 +61,7 @@
                         });
                     }
 	            {% endfor %}
-
+                $('#map_canvas').gmap('set', 'MarkerClusterer', new MarkerClusterer(_map, $('#map_canvas').gmap('get', 'markers')));
             }
         });
 
@@ -70,6 +74,7 @@
 	        var lngSpan = northEast.lng() - southWest.lng();
 	        var latSpan = northEast.lat() - southWest.lat();
 	        var currentDate;
+	        _map = map;
 	        console.log('binding behave of map');
             console.log(southWest.toString());
             console.log(northEast.toString());
@@ -83,10 +88,11 @@
                         $('#map_canvas').gmap('openInfoWindow', { content : '<img src="'+'{{photo_info['url']}}'+'" height="100" width="100">' }, this);
                     });
                 }
+
 	        {% endfor %}
 
 
-
+            //markerClusterer = new MarkerClusterer(map, markers);
 	        $('#map_canvas').gmap('set', 'MarkerClusterer', new MarkerClusterer(map, $(this).gmap('get', 'markers')));
 	        // To call methods in MarkerClusterer simply call
 	        // $('#map_canvas').gmap('get', 'MarkerClusterer').callingSomeMethod();
