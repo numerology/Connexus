@@ -258,7 +258,7 @@
 				      {% endif %}
 				      	<td align = "middle">
 							<div class = "img">
-						        <img src = "{{url}}" style="width:400px">
+						        <img src = "{{url}}" style=" max-width:400px">
 							</div>
 							{% if show_upload %}
 							<a class="btn btn-primary btn-sm" href="/api/delete_fig/{{stream.key.id()}}/{{fig_id_list[loop.index - 1]}}"> Delete</a>
