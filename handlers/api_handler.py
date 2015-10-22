@@ -17,11 +17,7 @@ import re  # used to parse list of emails
 from google.appengine.api import mail  # mailing functions in invitation, notification
 import logging
 import constants
-
-
 import random
-
-
 import json
 
 
@@ -485,6 +481,13 @@ class GenerateUploadUrlHandler(webapp2.RequestHandler):
         bkey = current_stream.figures[0].blob_key
 
         self.response.out.write(json.dumps({'upload_url':blobstore.create_upload_url('/upload_photo'), 'blob_key':str(bkey)}))
+
+
+class GetUploadUrlHandler(webapp2.RequestHandler):
+    def get(self):
+        self.response.headers['Content-Type'] = 'text/plain'
+
+        self.response.out.write(json.dumps({'upload_url':str(blobstore.create_upload_url('/upload_photo'))}))
 
 
 class UploadFromExtensionHandler(webapp2.RequestHandler):

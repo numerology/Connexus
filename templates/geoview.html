@@ -14,6 +14,7 @@
     <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/jquery-ui-map/3.0-rc1/jquery.ui.map.js"></script>
     <script type="text/javascript">
     var TZoffset = 5;
+    var Delta = 140000;
 
 
     $('document').ready(function() {
@@ -44,14 +45,14 @@
                 $('#map_canvas').gmap('clear', 'markers');
                 $('#map_canvas').gmap('get', 'MarkerClusterer').clearMarkers();
                 {% for photo_info in photo_info_list %}
-                    console.log('right: '+right);
+                    console.log('right(ms): '+right.getTime());
                     console.log('left(ms): '+left.getTime());
                     console.log('photo_time = '+'{{photo_info['time']}}');
 
                     current_time = new Date('{{photo_info['time']}}');
                     console.log('this: '+current_time);
                     console.log('this(ms): '+current_time.getTime());
-                    if(current_time.getTime()<right.getTime() && current_time.getTime()>left.getTime()){
+                    if(current_time.getTime()<right.getTime()+Delta && current_time.getTime()>left.getTime()){
                    // if(true){
                         console.log('adding');
                         $('#map_canvas').gmap('addMarker', {
@@ -81,7 +82,7 @@
 	        {% for photo_info in photo_info_list %}
                 console.log(new Date('{{photo_info['time']}}'));
                 current_time = new Date('{{photo_info['time']}}');
-                if(current_time.getTime()<today.getTime() && current_time.getTime()>lastYear.getTime()){
+                if(current_time.getTime()<today.getTime()+Delta && current_time.getTime()>lastYear.getTime()){
                     $('#map_canvas').gmap('addMarker', {
                         'position': new google.maps.LatLng({{photo_info['lng']}},{{photo_info['lat']}})
                     }).mouseover(function() {

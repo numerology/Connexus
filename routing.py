@@ -5,6 +5,7 @@ from handlers.AutoCompleteHandler import *
 from handlers.BuildCompletionIndexHandler import *
 from handlers.handlers import *
 from handlers.api_handler import *
+from handlers.androidApi import *
 from handlers.api_handler import image
 from handlers.api_handler import stream
 import webapp2
@@ -46,7 +47,9 @@ routes = [
  #   webapp2.Route(r'/geoview_fetch/<id:[\w-]+>', handler = GeoViewFetch, name = 'geoviewf'),
     webapp2.Route(r'/upload_fig', handler = UploadHandler, name = 'uploadpage'),
     webapp2.Route('/upload_photo', handler = PhotoUploadHandler, name = 'uploadapi'),
+    webapp2.Route('/mobile/upload_photo', handler = MobilePhotoUploadHandler),
     webapp2.Route('/generate_upload_url/<stream_id:[\w-]+>', handler = GenerateUploadUrlHandler),
+    webapp2.Route('/mobile/getUploadURL', handler = GetUploadUrlHandler),
 
     #YW add routing for subscribe pate
     webapp2.Route(r'/subscribe/<stream_id:[\w-]+>', handler = SubscribeStreamHandler, name = 'subscribestream'),
