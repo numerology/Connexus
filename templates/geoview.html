@@ -12,6 +12,7 @@
 	<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=true"></script>
 	<script type="text/javascript" src="http://cdn.aldu.net/google.maps.markerclusterer/2.0.6/markerclusterer.js"></script>
     <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/jquery-ui-map/3.0-rc1/jquery.ui.map.js"></script>
+    <script type="text/javascript" src="/scripts/oms.min.js"></script>
     <script type="text/javascript">
     var TZoffset = 5;
     var Delta = 140000;
@@ -24,6 +25,7 @@
         var markers = [];
         var markerCluster;
 		lastYear.setFullYear(lastYear.getFullYear() - 1);
+
 
 		today.setHours(today.getHours() + TZoffset);
         lastYear.setHours(lastYear.getHours() + TZoffset);
@@ -79,6 +81,7 @@
 	        console.log('binding behave of map');
             console.log(southWest.toString());
             console.log(northEast.toString());
+
 	        {% for photo_info in photo_info_list %}
                 console.log(new Date('{{photo_info['time']}}'));
                 current_time = new Date('{{photo_info['time']}}');
@@ -88,6 +91,7 @@
                     }).mouseover(function() {
                         $('#map_canvas').gmap('openInfoWindow', { content : '<img src="'+'{{photo_info['url']}}'+'" height="100" width="100">' }, this);
                     });
+
                 }
 
 	        {% endfor %}

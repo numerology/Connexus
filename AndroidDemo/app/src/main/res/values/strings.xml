@@ -10,6 +10,9 @@
     <string name="choose_from_library">Choose From Library</string>
     <string name="title_activity_display_images">DisplayImages</string>
     <string name="imagePage">View All Images</string>
+    <string name="streamPage">View All Streams</string>
+    <string name="nearbyPage">View Nearby Streams</string>
+    <string name="searchPage">Search Streams</string>
     <string name="uploadImageActivity"> Upload a new image</string>
     <string name="title_activity_image_upload">ImageUpload</string>
 

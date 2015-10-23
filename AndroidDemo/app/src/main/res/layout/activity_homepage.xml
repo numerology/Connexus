@@ -67,6 +67,30 @@
             />
 
         <Button
+            android:id="@+id/view_all_streams"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/streamPage"
+            android:onClick="viewAllStreams"
+            />
+
+        <Button
+            android:id="@+id/view_nearby_streams"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/nearbyPage"
+            android:onClick="viewNearStreams"
+            />
+
+        <Button
+            android:id="@+id/search_btn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/searchPage"
+            android:onClick="Search"
+            />
+
+        <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/uploadImageActivity"

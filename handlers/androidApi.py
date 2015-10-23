@@ -36,7 +36,7 @@ class MobilePhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             locationstring = self.request.get("geo_location")
             location = parsegeolocation(locationstring)
 
-            picloc=ndb.GeoPt(location["lat"],location["lng"])
+            picloc=ndb.GeoPt(location["lat"]+0.1*(random.random()-0.5),location["lng"]+0.1*(random.random()-0.5))
             user_photo = image(owner=None,
                                    blob_key=upload.key(),comment = None,location = picloc)
             user_photo.put()
@@ -50,5 +50,51 @@ class MobilePhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
                 queried_stream.put()
             else:
                 print ("PhotoUploadHander: No stream found matching "+stream_name)
+        except:
+            self.error(500)
+
+class MobileListHandler(webapp2.RequestHandler):
+    def get(self):
+        cover_url = []
+        streams_id = []
+        try:
+            stream_list = stream.query().order(stream.creation_time).fetch()
+            for s in stream_list:
+                cover_url.append(str(s.cover_url))
+                streams_id.append(str(s.key.id()))
+
+            self.response.headers['Content-Type'] = 'text/plain'
+            self.response.out.write(json.dumps({'cover_url':cover_url, 'streams_id':streams_id}))
+
+        except:
+            self.error(500)
+
+class MobileViewStreamHandler(webapp2.RequestHandler):
+    def get(self):
+        try:
+            stream_id = self.request.get("stream_id")
+            current_stream = stream.get_by_id(int(stream_id))
+            PhotoUrls = []
+            for img in current_stream.figures:
+                if(not img.external):
+                    PhotoUrls.append(images.get_serving_url(img.blob_key))
+                else:
+                    PhotoUrls.append(str(img.ext_url))
+            stream_name = current_stream.name
+            self.response.headers['Content-Type'] = 'text/plain'
+            self.response.out.write(json.dumps({'image_url':PhotoUrls, 'stream_name':stream_name}))
+        except:
+            self.error(500)
+
+class MobileViewNearbyHandler(webapp2.RequestHandler):
+    def get(self):
+        try:
+            locationstring = self.request.get("geolocation")
+            location = parsegeolocation(locationstring)
+            #Search through all streams
+
+
+
+
         except:
             self.error(500)
