@@ -14,7 +14,7 @@ class MobileSearchHandler(webapp2.RequestHandler):
         print ('MobileSearchHandler: original string: '+original_keyword_string)
         keywords = parse_search_keyword(original_keyword_string)
         queried_keywords = (keywords['plain_keywords'] + keywords['tags'])
-        return_result = {"StreamNames": [], "CoverUrls": []}
+        return_result = {"StreamNames": [], "CoverUrls": [], "StreamIds":[]}
         if queried_keywords:
             # allow to check matching part of the string
             all_streams = stream.query().order(-stream.num_of_view, -stream.num_of_pics)
@@ -25,6 +25,7 @@ class MobileSearchHandler(webapp2.RequestHandler):
                 temp_stream_string = " ".join(list(set(temp_stream_words) - constants.CACHED_STOP_WORDS)).lower()
                 if any(temp_keyword.lower() in temp_stream_string for temp_keyword in queried_keywords):
                     return_result["StreamNames"].append(str(temp_stream.name))
+                    return_result["StreamIds"].append(str(temp_stream.key.id()))
                     if temp_stream.cover_url:
                         return_result["CoverUrls"].append(str(temp_stream.cover_url))
                     else:
