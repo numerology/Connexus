@@ -1,8 +1,11 @@
 __author__ = 'Yicong'
 from google.appengine.ext import ndb
+import json
+import webapp2
+import re
 from api_handler import parse_search_keyword
 from api_handler import stream
-import json
+import constants
 
 
 class MobileSearchHandler(webapp2.RequestHandler):

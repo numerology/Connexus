@@ -1,5 +1,6 @@
 __author__ = 'Jiaxiao Zheng'
 
+from handlers.MobileSearchHandler import *
 from handlers.ExtensionUploadHandler import *
 from handlers.AutoCompleteHandler import *
 from handlers.BuildCompletionIndexHandler import *
