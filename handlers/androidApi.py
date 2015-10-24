@@ -17,7 +17,18 @@ import constants
 import random
 import json
 from api_handler import *
+from math import radians, cos, sin, asin, sqrt
 from ExtensionUploadHandler import *
+
+def haversine(lon1, lat1, lon2, lat2):
+
+    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2 * asin(sqrt(a))
+    km = 6367 * c
+    return km
 
 class GetUploadUrlHandler(webapp2.RequestHandler):
     def get(self):
@@ -36,7 +47,7 @@ class MobilePhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             locationstring = self.request.get("geo_location")
             location = parsegeolocation(locationstring)
 
-            picloc=ndb.GeoPt(location["lat"]+0.1*(random.random()-0.5),location["lng"]+0.1*(random.random()-0.5))
+            picloc=ndb.GeoPt(location["lat"]+0.005*(random.random()-0.5),location["lng"]+0.005*(random.random()-0.5))
             user_photo = image(owner=None,
                                    blob_key=upload.key(),comment = None,location = picloc)
             user_photo.put()
@@ -92,9 +103,24 @@ class MobileViewNearbyHandler(webapp2.RequestHandler):
             locationstring = self.request.get("geolocation")
             location = parsegeolocation(locationstring)
             #Search through all streams
+            img_list = []
+            stream_list = stream.query()
+            for s in stream_list:
+                for img in s.figures:
+                    if(haversine(location["lng"],location["lat"],img.location["lng"],img.location["lat"]) < 10):
+                        img_list.append({'img':img,'dist':haversine(location["lng"],location["lat"],img.location["lng"],img.location["lat"])})
+
+            img_list = sorted(img_list, key = lambda img: img['dist'])
+
+            PhotoUrls = []
+            for img in img_list:
+                if(not img.external):
+                    PhotoUrls.append(images.get_serving_url(img.blob_key))
+                else:
+                    PhotoUrls.append(str(img.ext_url))
 
 
-
-
+            self.response.headers['Content-Type'] = 'text/plain'
+            self.response.out.write(json.dumps({'image_url':PhotoUrls}))
         except:
             self.error(500)
