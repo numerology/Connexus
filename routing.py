@@ -24,10 +24,11 @@ routes = [
   # YW: Add autocomplete handler
     webapp2.Route(r'/api/autocomplete', handler=AutoCompleteHandler, name='autocomplete'),
     webapp2.Route(r'/api/stream_autocomplete', handler=StreamAutoCompleteHandler, name='stream_autocomplete'),  # autocomplete for stream name
-    webapp2.Route(r'/api/build_completion_index', handler=BuildCompletionIndexHandler, name='build_completion_index'),
+    webapp2.Route(r'/api/build_completion_index', handler=BuildCompletionIndexHandler, name='build_completion_index_api'),
 
-    webapp2.Route(r'/api/upload_image_from_extension', handler=ExtensionUploadHandler, name='extension_uploader'),
-
+    webapp2.Route(r'/api/upload_image_from_extension', handler=ExtensionUploadHandler, name='extension_uploader_api'),
+  # YW: new API for mobile search
+    webapp2.Route(r'/api/mobile_search', handler=MobileSearchHandler, name='mobile_search_api'),
 
     webapp2.Route(r'/', handler = MainPage, name = 'mainpage'),
     webapp2.Route(r'/management', handler = ManagementHandler, name = 'management'),
