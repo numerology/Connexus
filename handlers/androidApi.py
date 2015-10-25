@@ -99,17 +99,21 @@ class MobileViewStreamHandler(webapp2.RequestHandler):
 
 class MobileViewNearbyHandler(webapp2.RequestHandler):
     def get(self):
-        try:
+
             locationstring = self.request.get("geolocation")
+            print('start')
             location = parsegeolocation(locationstring)
             #Search through all streams
             img_list = []
-            stream_list = stream.query()
+            stream_list = stream.query().fetch()
+            print('stream got')
             for s in stream_list:
                 for img in s.figures:
-                    if(haversine(location["lng"],location["lat"],img.location["lng"],img.location["lat"]) < 10):
+                    print(str(img.location.lat) + '+' + str(img.location.lon))
+                    print(haversine(location["lng"],location["lat"],img.location.lon,img.location.lat))
+                    if(haversine(location["lng"],location["lat"],img.location.lon,img.location.lat) < 1000):
                         img_list.append({'img':img,
-                                         'dist':haversine(location["lng"],location["lat"],img.location["lng"],img.location["lat"]),
+                                         'dist':haversine(location["lng"],location["lat"],img.location.lon,img.location.lat),
                                          'stream_id':str(s.key.id())})
 
             img_list = sorted(img_list, key = lambda img: img['dist'])
@@ -118,13 +122,13 @@ class MobileViewNearbyHandler(webapp2.RequestHandler):
             StreamIDs = []
             for img in img_list:
                 StreamIDs.append(img['stream_id'])
-                if(not img.external):
+                if(not img['img'].external):
                     PhotoUrls.append(images.get_serving_url(img['img'].blob_key))
                 else:
                     PhotoUrls.append(str(img['img'].ext_url))
 
 
             self.response.headers['Content-Type'] = 'text/plain'
-            self.response.out.write(json.dumps({'image_url':PhotoUrls, 'stream_ids':StreamIDs}))
-        except:
-            self.error(500)
+            self.response.out.write(json.dumps({'image_url':PhotoUrls, 'stream_id':StreamIDs}))
+
+            #self.error(500)
