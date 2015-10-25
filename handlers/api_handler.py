@@ -604,6 +604,8 @@ class CreateStreamHandler(webapp2.RequestHandler):
         if not queried_user_profile:
             queried_user_profile = user_profile(user_id=user.user_id(), user_email=user.email(), own_streams=[], subscribed_streams=[])
         queried_user_profile.own_streams.append(new_stream.name)
+
+        queried_user_profile.put()
         
         subscribers = parse_subscriber(self.request.get('subscriber'))
         for to_addr in subscribers:

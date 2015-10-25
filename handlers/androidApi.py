@@ -82,9 +82,10 @@ class MobileListHandler(webapp2.RequestHandler):
 
 class MobileViewStreamHandler(webapp2.RequestHandler):
     def get(self):
-        try:
+       # try:
             stream_id = self.request.get("stream_id")
             current_stream = stream.get_by_id(int(stream_id))
+            mobile_user = self.request.get("user_email")
             PhotoUrls = []
             for img in current_stream.figures:
                 if(not img.external):
@@ -92,10 +93,30 @@ class MobileViewStreamHandler(webapp2.RequestHandler):
                 else:
                     PhotoUrls.append(str(img.ext_url))
             stream_name = current_stream.name
+            print(str(mobile_user))
+
+            user_list = user_profile.query().fetch()
+            for u in user_list:
+                print(u.user_email)
+                print(u.own_streams)
+
+
+            current_prof = user_profile.query(user_profile.user_email == str(mobile_user)).get()
+            owned_streams = current_prof.own_streams
+
+            print(owned_streams)
+
+            if (current_stream.name in owned_streams):
+                ownerflag = True
+            else:
+                ownerflag = False
+
             self.response.headers['Content-Type'] = 'text/plain'
-            self.response.out.write(json.dumps({'image_url':PhotoUrls, 'stream_name':stream_name}))
-        except:
-            self.error(500)
+            self.response.out.write(json.dumps({'image_url':PhotoUrls,
+                                                'stream_name':stream_name,
+                                                'owner_flag': ownerflag}))
+     #   except:
+      #      self.error(500)
 
 class MobileViewNearbyHandler(webapp2.RequestHandler):
     def get(self):
@@ -135,9 +156,30 @@ class MobileViewNearbyHandler(webapp2.RequestHandler):
 
 class MobileListSubscribedHandler(webapp2.RequestHandler):
     def get(self):
-        try:
+#        try:
             user_email = self.request.get('user_email')
             print('user_email')
+            StreamList = []
 
-        except:
-            self.error(500)
+            s_list = stream.query().order(stream.last_modified).fetch()
+            for s in s_list:
+                for subscriber in s.subscribers:
+                    if str(subscriber.email()) == user_email :
+                        StreamList.append(s)
+                        break
+
+            cnt = 0
+            cover_url = []
+            streams_id = []
+            for s in StreamList:
+                cover_url.append(s.cover_url)
+                streams_id.append(s.key.id())
+                cnt = cnt + 1
+                if(cnt==16):
+                    break
+
+            self.response.headers['Content-Type'] = 'text/plain'
+            self.response.out.write(json.dumps({'cover_url':cover_url, 'streams_id':streams_id}))
+
+#        except:
+#            self.error(500)

@@ -56,6 +56,7 @@ routes = [
     webapp2.Route('/mobile/stream_list', handler = MobileListHandler),
     webapp2.Route('/mobile/stream_view', handler = MobileViewStreamHandler),
     webapp2.Route('/mobile/stream_nearby', handler = MobileViewNearbyHandler),
+    webapp2.Route('/mobile/stream_subscribed', handler = MobileListSubscribedHandler),
 
     #YW add routing for subscribe pate
     webapp2.Route(r'/subscribe/<stream_id:[\w-]+>', handler = SubscribeStreamHandler, name = 'subscribestream'),
