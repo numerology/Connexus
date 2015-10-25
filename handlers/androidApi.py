@@ -69,7 +69,7 @@ class MobileListHandler(webapp2.RequestHandler):
         cover_url = []
         streams_id = []
         try:
-            stream_list = stream.query().order(stream.creation_time).fetch()
+            stream_list = stream.query().order(stream.last_modified).fetch()
             for s in stream_list:
                 cover_url.append(str(s.cover_url))
                 streams_id.append(str(s.key.id()))
@@ -99,7 +99,7 @@ class MobileViewStreamHandler(webapp2.RequestHandler):
 
 class MobileViewNearbyHandler(webapp2.RequestHandler):
     def get(self):
-
+        try:
             locationstring = self.request.get("geolocation")
             print('start')
             location = parsegeolocation(locationstring)
@@ -130,5 +130,14 @@ class MobileViewNearbyHandler(webapp2.RequestHandler):
 
             self.response.headers['Content-Type'] = 'text/plain'
             self.response.out.write(json.dumps({'image_url':PhotoUrls, 'stream_id':StreamIDs}))
+        except:
+            self.error(500)
 
-            #self.error(500)
+class MobileListSubscribedHandler(webapp2.RequestHandler):
+    def get(self):
+        try:
+            user_email = self.request.get('user_email')
+            print('user_email')
+
+        except:
+            self.error(500)
