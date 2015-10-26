@@ -102,12 +102,15 @@ class MobileViewStreamHandler(webapp2.RequestHandler):
 
 
             current_prof = user_profile.query(user_profile.user_email == str(mobile_user)).get()
-            owned_streams = current_prof.own_streams
+            if(not current_prof == None):
+                owned_streams = current_prof.own_streams
 
-            print(owned_streams)
+                print(owned_streams)
 
-            if (current_stream.name in owned_streams):
-                ownerflag = True
+                if (current_stream.name in owned_streams):
+                    ownerflag = True
+                else:
+                    ownerflag = False
             else:
                 ownerflag = False
 
