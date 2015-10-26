@@ -866,17 +866,19 @@ def parse_subscriber(subscriber_string):
         splitter = r'[,;\t\r\n\s]'
         subscribers = re.split(splitter, subscriber_string)
         return subscribers
-        
+
+
 def parse_tag(tag_string):
     """Parse tags from string"""
     # tags = filter(None, re.sub('[ ,;\t\n\r]','',tag_string).split('#'))
-    tags = re.findall(r'#[A-Za-z0-9]+',tag_string)
+    tags = re.findall(r'#[A-Za-z0-9]+', tag_string)
     return tags
-    
+
+
 def is_valid_stream_name(name_string):
     """Check whether the stream name is valid"""
     name_string = name_string.strip(" ")
-    if (not name_string):
+    if not name_string:
         return False
     if re.match(r"[~\!@#\$%\^&\*\(\)\+{}:;\[\]\r\n\t]", name_string):
         return False
@@ -884,10 +886,12 @@ def is_valid_stream_name(name_string):
     if not name_words:
         return False
     plain_word_regex = re.compile(r"^[A-Za-z0-9]+[A-Za-z0-9\'-_]+$")
+    single_character_regex = re.compile(r"^[A-Za-z0-9]$")
     for name_word in name_words:
-        if not plain_word_regex.match(name_word):
+        if not (plain_word_regex.match(name_word) or single_character_regex.match(name_word)):
             return False
     return True
+
 
 def parse_search_keyword(key_word_string):    
     """Parse key words for search stream"""
