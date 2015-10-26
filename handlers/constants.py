@@ -12,6 +12,8 @@ STREAM_AUTO_COMPLETE_LENGTH = 5
 
 SEARCH_LENGTH = 5
 
+COVER_URL_MAX_LENGTH = 500
+
 
 class CompletionIndex(ndb.Model):
     keywords = ndb.StringProperty(repeated=True, indexed=False)

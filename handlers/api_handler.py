@@ -351,7 +351,8 @@ class GeoViewFetch(webapp2.RequestHandler):
         current_stream = stream.get_by_id(int(stream_id))
         bkey = current_stream.figures[0].blob_key
 
-        self.response.out.write(json.dumps({'upload_url':blobstore.create_upload_url('/upload_photo'), 'blob_key':str(bkey)}))
+        self.response.out.write(json.dumps({'upload_url': blobstore.create_upload_url('/upload_photo'),
+                                            'blob_key': str(bkey)}))
 
 
 class DefaultViewStreamHandler(webapp2.RequestHandler):
@@ -363,20 +364,18 @@ class DeleteStreamHandler(webapp2.RequestHandler):
     def get(self, id):
         user = users.get_current_user()
         if user is None:
-        # go to login page
+            # go to login page
             print("View Stream Handler: Not logged in")
             self.redirect(users.create_login_page(self.request.uri))
             return
 
-
-
         current_stream = stream.get_by_id(int(id))
-        if(not current_stream):
+        if not current_stream:
             self.redirect("/error/" + 'Wrong stream or page number')
             return
 
         if current_stream:
-            #delete all the imgs, because they are huge
+            # delete all the imgs, because they are huge
             for i in current_stream.figures:
                 if(not i.external):
                     blobstore.delete(i.blob_key)
@@ -384,7 +383,7 @@ class DeleteStreamHandler(webapp2.RequestHandler):
             if queried_user_profile:
                 if current_stream.name in queried_user_profile.own_streams:
                     queried_user_profile.own_streams.remove(str(current_stream.name))
-                if (not queried_user_profile.own_streams) and (not queried_user_profile.subscibed_streams):
+                if (not queried_user_profile.own_streams) and (not queried_user_profile.subscribed_streams):
                     # no own_streams nor subscribed_streams
                     queried_user_profile.key.delete()
                 else:
@@ -590,6 +589,13 @@ class CreateStreamHandler(webapp2.RequestHandler):
             msg = 'CreateStreamHandler: Stream name existing'
             self.redirect('/error/' + msg)
             return
+
+        temp_cover_url = self.request.get('cover_url');
+        if len(temp_cover_url) > constants.COVER_URL_MAX_LENGTH:
+            msg = 'CreateStreamHandler: Cover url too long, max is ' + str(constants.COVER_URL_MAX_LENGTH)
+            print msg
+            self.redirect('/error/' + msg)
+            return
         
         owner = user.user_id()
         
@@ -602,7 +608,8 @@ class CreateStreamHandler(webapp2.RequestHandler):
         # Create or update user profile
         queried_user_profile = user_profile.query(user_profile.user_id == user.user_id()).get()
         if not queried_user_profile:
-            queried_user_profile = user_profile(user_id=user.user_id(), user_email=user.email(), own_streams=[], subscribed_streams=[])
+            queried_user_profile = user_profile(user_id=user.user_id(), user_email=user.email(),
+                                                own_streams=[], subscribed_streams=[])
         queried_user_profile.own_streams.append(new_stream.name)
 
         queried_user_profile.put()
@@ -642,6 +649,7 @@ class CreateStreamHandler(webapp2.RequestHandler):
         #self.redirect(('/view/%s' % str(new_stream.key.id())))
         self.redirect('/management')
 
+
 class TrendReportHandler(webapp2.RequestHandler):
     def get(self, freq):
         if int(freq) == 1:
@@ -650,7 +658,8 @@ class TrendReportHandler(webapp2.RequestHandler):
             subscriber_list = trend_subscribers.query(trend_subscribers.report_freq == '1 hour').fetch()
         elif int(freq) == 4:
             subscriber_list = trend_subscribers.query(trend_subscribers.report_freq == 'everyday').fetch()
-        else: subscriber_list = []
+        else:
+            subscriber_list = []
         print "TrendReportHandler: trend sending"
 
         stream_list = stream.query().order(-stream.num_of_view).fetch(3)
@@ -659,34 +668,34 @@ class TrendReportHandler(webapp2.RequestHandler):
         for s in subscriber_list:
             to_list.append(s.user_email)
 
-        if (len(stream_list) == 3):
+        if len(stream_list) == 3:
 
-                cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
+                cmail = mail.EmailMessage(sender="Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
                 cmail.to = to_list
                 cmail.body = """ Hello, following is your connexus digest. The top 3 most popular stream are:
                 %(name1)s, %(name2)s, %(name3)s. To check the detail please click thru the following link:
                 %(trending_url)s
-                """ % {'name1':stream_list[0].name,
-                       'name2':stream_list[1].name,
-                       'name3':stream_list[2].name,
-                       'trending_url':'http://just-plate-107116.appspot.com/stream_trending'}
+                """ % {'name1': stream_list[0].name,
+                       'name2': stream_list[1].name,
+                       'name3': stream_list[2].name,
+                       'trending_url': 'http://just-plate-107116.appspot.com/stream_trending'}
                 cmail.send()
 
-        elif (len(stream_list) == 2):
+        elif len(stream_list) == 2:
 
                 cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
                 cmail.to = to_list
                 cmail.body = """ Hello, following is your connexus digest. The top 2 most popular stream are:
                 %(name1)s, %(name2)s. To check the detail please click thru the following link:
                 %(trending_url)s
-                """ % {'name1':stream_list[0].name,
-                       'name2':stream_list[1].name,
-                       'trending_url':'http://just-plate-107116.appspot.com/stream_trending'}
+                """ % {'name1': stream_list[0].name,
+                       'name2': stream_list[1].name,
+                       'trending_url': 'http://just-plate-107116.appspot.com/stream_trending'}
                 cmail.send()
 
-        elif (len(stream_list) == 1):
-
-                cmail = mail.EmailMessage(sender = "Connexus Support <support@just-plate-107116.appspotmail.com>", subject = "Connexus Digest")
+        elif len(stream_list) == 1:
+                cmail = mail.EmailMessage(sender="Connexus Support <support@just-plate-107116.appspotmail.com>",
+                                          subject="Connexus Digest")
                 cmail.to = to_list
                 cmail.body = """ Hello, following is your connexus digest. The top 1 most popular stream are:
                 %(name1)s. To check the detail please click thru the following link:
@@ -709,16 +718,16 @@ class TrendingFrequencyHandler(webapp2.RequestHandler):
     def post(self):
         user = users.get_current_user()
         trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'adnan.aziz@gmail.com').fetch()
-        if len(trend_slist)==0:
+        if len(trend_slist) == 0:
             trend_subscribers(user_email = 'adnan.aziz@gmail.com', report_freq = '0').put()
         trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'nima.dini@utexas.edu').fetch()
-        if len(trend_slist)==0:
+        if len(trend_slist) == 0:
             trend_subscribers(user_email = 'nima.dini@utexas.edu', report_freq = '0').put()
         trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'kevzsolo@gmail.com').fetch()
-        if len(trend_slist)==0:
+        if len(trend_slist) == 0:
             trend_subscribers(user_email = 'kevzsolo@gmail.com', report_freq = '0').put()
         trend_slist = trend_subscribers.query(trend_subscribers.user_email == 'jxzheng39@gmail.com').fetch()
-        if len(trend_slist)==0:
+        if len(trend_slist) == 0:
             trend_subscribers(user_email = 'jxzheng39@gmail.com', report_freq = '0').put()
 
         if user is None:
