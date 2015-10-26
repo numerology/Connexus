@@ -135,7 +135,7 @@ class MobileViewNearbyHandler(webapp2.RequestHandler):
                 for img in s.figures:
                     print(str(img.location.lat) + '+' + str(img.location.lon))
                     print(haversine(location["lng"],location["lat"],img.location.lon,img.location.lat))
-                    if(haversine(location["lng"],location["lat"],img.location.lon,img.location.lat) < 1000):
+                    if(haversine(location["lng"],location["lat"],img.location.lon,img.location.lat) < 100):
                         img_list.append({'img':img,
                                          'dist':haversine(location["lng"],location["lat"],img.location.lon,img.location.lat),
                                          'stream_id':str(s.key.id())})
