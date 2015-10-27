@@ -114,6 +114,26 @@ class MobileViewStreamHandler(webapp2.RequestHandler):
             else:
                 ownerflag = False
 
+
+            if not ownerflag:
+                now_time = view_counter()
+                now_time.put()
+                current_stream.views.append(now_time)
+
+            cutofftime = datetime.now() - timedelta(minutes=1)
+
+            i = 0
+            while i<len(current_stream.views):
+                print(i)
+                if datetime.now()-current_stream.views[i].date > timedelta(hours = 1):
+                #for now let's say the record only keep for 1 mins
+                    current_stream.views.remove(current_stream.views[i])
+                else:
+                    break
+
+            current_stream.num_of_view = len(current_stream.views)
+            current_stream.put()
+
             self.response.headers['Content-Type'] = 'text/plain'
             self.response.out.write(json.dumps({'image_url':PhotoUrls,
                                                 'stream_name':stream_name,
