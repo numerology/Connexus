@@ -1,0 +1,100 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/response_scroll"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:scrollbars="vertical"
+    >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        tools:context=".Homepage">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="2dip">
+
+            <com.google.android.gms.common.SignInButton
+                android:id="@+id/sign_in_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="30dip"
+                android:enabled="false" />
+
+            <Button
+                android:id="@+id/sign_out_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sign_out_button_name"
+                android:enabled="false" />
+
+            <Button
+                android:id="@+id/revoke_access_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/revoke_access_button_name"
+                android:enabled="false" />
+
+        </LinearLayout>
+
+
+        <TextView
+            android:id="@+id/sign_in_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dip"
+            android:text="@string/status_signed_out" />
+
+        <TextView
+            android:text="@string/welcome"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="40sp"
+            android:paddingBottom = "40sp"
+            />
+
+        <Button
+            android:id="@+id/view_all_images"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/imagePage"
+            android:onClick="viewAllImages"
+            />
+
+        <Button
+            android:id="@+id/view_all_streams"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/streamPage"
+            android:onClick="viewAllStreams"
+            />
+
+        <Button
+            android:id="@+id/view_nearby_streams"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/nearbyPage"
+            android:onClick="viewNearStreams"
+            />
+
+        <Button
+            android:id="@+id/search_btn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/searchPage"
+            android:onClick="Search"
+            />
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/uploadImageActivity"
+            android:clickable="false"
+            android:id="@+id/open_image_upload_page"/>
+    </LinearLayout>
+</ScrollView>

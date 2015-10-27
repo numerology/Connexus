@@ -1,10 +1,12 @@
 __author__ = 'Jiaxiao Zheng'
 
+from handlers.MobileSearchHandler import *
 from handlers.ExtensionUploadHandler import *
 from handlers.AutoCompleteHandler import *
 from handlers.BuildCompletionIndexHandler import *
 from handlers.handlers import *
 from handlers.api_handler import *
+from handlers.androidApi import *
 from handlers.api_handler import image
 from handlers.api_handler import stream
 import webapp2
@@ -24,10 +26,11 @@ routes = [
   # YW: Add autocomplete handler
     webapp2.Route(r'/api/autocomplete', handler=AutoCompleteHandler, name='autocomplete'),
     webapp2.Route(r'/api/stream_autocomplete', handler=StreamAutoCompleteHandler, name='stream_autocomplete'),  # autocomplete for stream name
-    webapp2.Route(r'/api/build_completion_index', handler=BuildCompletionIndexHandler, name='build_completion_index'),
+    webapp2.Route(r'/api/build_completion_index', handler=BuildCompletionIndexHandler, name='build_completion_index_api'),
 
-    webapp2.Route(r'/api/upload_image_from_extension', handler=ExtensionUploadHandler, name='extension_uploader'),
-
+    webapp2.Route(r'/api/upload_image_from_extension', handler=ExtensionUploadHandler, name='extension_uploader_api'),
+  # YW: new API for mobile search
+    webapp2.Route(r'/api/mobile_search', handler=MobileSearchHandler, name='mobile_search_api'),
 
     webapp2.Route(r'/', handler = MainPage, name = 'mainpage'),
     webapp2.Route(r'/management', handler = ManagementHandler, name = 'management'),
@@ -47,6 +50,13 @@ routes = [
     webapp2.Route(r'/upload_fig', handler = UploadHandler, name = 'uploadpage'),
     webapp2.Route('/upload_photo', handler = PhotoUploadHandler, name = 'uploadapi'),
     webapp2.Route('/generate_upload_url/<stream_id:[\w-]+>', handler = GenerateUploadUrlHandler),
+
+    webapp2.Route('/mobile/upload_photo', handler = MobilePhotoUploadHandler),
+    webapp2.Route('/mobile/getUploadURL', handler = GetUploadUrlHandler),
+    webapp2.Route('/mobile/stream_list', handler = MobileListHandler),
+    webapp2.Route('/mobile/stream_view', handler = MobileViewStreamHandler),
+    webapp2.Route('/mobile/stream_nearby', handler = MobileViewNearbyHandler),
+    webapp2.Route('/mobile/stream_subscribed', handler = MobileListSubscribedHandler),
 
     #YW add routing for subscribe pate
     webapp2.Route(r'/subscribe/<stream_id:[\w-]+>', handler = SubscribeStreamHandler, name = 'subscribestream'),

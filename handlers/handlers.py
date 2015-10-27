@@ -53,7 +53,6 @@ class ManagementHandler(webapp2.RequestHandler):
                            'stream_owned': stream_owned,
                            'stream_subscribed': stream_subscribed,
                            'unsubscribe_return_url': unsubscribe_return_url,
-                           'stream_subscribed':stream_subscribed
                            }
         print ('PATH to current '+os.path.dirname(__file__))
         template = JINJA_ENVIRONMENT.get_template('manage_temp.html')
