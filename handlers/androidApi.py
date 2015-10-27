@@ -150,6 +150,7 @@ class MobileViewNearbyHandler(webapp2.RequestHandler):
             #Search through all streams
             img_list = []
             stream_list = stream.query().fetch()
+            Dists = []
             print('stream got')
             for s in stream_list:
                 for img in s.figures:
@@ -164,8 +165,10 @@ class MobileViewNearbyHandler(webapp2.RequestHandler):
 
             PhotoUrls = []
             StreamIDs = []
+
             for img in img_list:
                 StreamIDs.append(img['stream_id'])
+                Dists.append(str(img['dist'])[0:5] + 'km')
                 if(not img['img'].external):
                     PhotoUrls.append(images.get_serving_url(img['img'].blob_key))
                 else:
@@ -173,7 +176,7 @@ class MobileViewNearbyHandler(webapp2.RequestHandler):
 
 
             self.response.headers['Content-Type'] = 'text/plain'
-            self.response.out.write(json.dumps({'image_url':PhotoUrls, 'stream_id':StreamIDs}))
+            self.response.out.write(json.dumps({'image_url':PhotoUrls, 'stream_id':StreamIDs, 'distance':Dists}))
         except:
             self.error(500)
 
