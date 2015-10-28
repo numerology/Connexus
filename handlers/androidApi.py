@@ -45,11 +45,12 @@ class MobilePhotoUploadHandler(blobstore_handlers.BlobstoreUploadHandler):
             print ("PhotoUploadHandler: upload resized")
             stream_name = self.request.get("stream_name")
             locationstring = self.request.get("geo_location")
+            caption = self.request.get("caption")
             location = parsegeolocation(locationstring)
 
             picloc=ndb.GeoPt(location["lat"]+0.005*(random.random()-0.5),location["lng"]+0.005*(random.random()-0.5))
             user_photo = image(owner=None,
-                                   blob_key=upload.key(),comment = None,location = picloc)
+                                   blob_key=upload.key(),comment = caption,location = picloc)
             user_photo.put()
             queried_stream = stream.query(stream.name == stream_name).get()
             if queried_stream:
@@ -87,7 +88,9 @@ class MobileViewStreamHandler(webapp2.RequestHandler):
             current_stream = stream.get_by_id(int(stream_id))
             mobile_user = self.request.get("user_email")
             PhotoUrls = []
+            Captions = []
             for img in current_stream.figures:
+                Captions.append(img.comment)
                 if(not img.external):
                     PhotoUrls.append(images.get_serving_url(img.blob_key))
                 else:
@@ -137,6 +140,7 @@ class MobileViewStreamHandler(webapp2.RequestHandler):
             self.response.headers['Content-Type'] = 'text/plain'
             self.response.out.write(json.dumps({'image_url':PhotoUrls,
                                                 'stream_name':stream_name,
+                                                'captions': Captions,
                                                 'owner_flag': ownerflag}))
      #   except:
       #      self.error(500)
