@@ -22,6 +22,10 @@ class MobileSearchHandler(webapp2.RequestHandler):
                 temp_stream_words = []
                 temp_stream_words.extend(filter(None, re.split(r'[\s]', temp_stream.name)))
                 temp_stream_words.extend(temp_stream.tags)
+                if temp_stream.figures:
+                    for temp_img in temp_stream.figures:
+                        if temp_img.comment:
+                            temp_stream_words.extend(filter(None, re.split(r'[\s]', temp_img.comment)))
                 temp_stream_string = " ".join(list(set(temp_stream_words) - constants.CACHED_STOP_WORDS)).lower()
                 if any(temp_keyword.lower() in temp_stream_string for temp_keyword in queried_keywords):
                     return_result["StreamNames"].append(str(temp_stream.name))

@@ -14,6 +14,7 @@ SEARCH_LENGTH = 5
 
 COVER_URL_MAX_LENGTH = 500
 
+COMMENT_LENGTH = 500
 
 class CompletionIndex(ndb.Model):
     keywords = ndb.StringProperty(repeated=True, indexed=False)

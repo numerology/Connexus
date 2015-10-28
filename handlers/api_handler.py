@@ -504,7 +504,9 @@ class UploadFromExtensionHandler(webapp2.RequestHandler):
             '''
             print('adding figure')
             stream_name = self.request.get("streamName")
-            thiscomment = self.request.get("comment")
+            thiscomment = str(self.request.get("comment"))
+            if len(thiscomment)>constants.COMMENT_LENGTH:
+                thiscomment=thiscomment[:constants.COMMENT_LENGTH]
             image_url = self.request.get("imageUrl")
             geoLocation = self.request.get("geoLocation")
             geoString = geoLocation[1:-1].split(", ")
@@ -929,6 +931,10 @@ class SearchHandler(webapp2.RequestHandler):
                 temp_stream_words = []
                 temp_stream_words.extend(filter(None, re.split(r'[\s]', temp_stream.name)))
                 temp_stream_words.extend(temp_stream.tags)
+                if temp_stream.figures:
+                    for temp_img in temp_stream.figures:
+                        if temp_img.comment:
+                            temp_stream_words.extend(filter(None, re.split(r'[\s]', temp_img.comment)))
                 temp_stream_string = " ".join(list(set(temp_stream_words) - constants.CACHED_STOP_WORDS)).lower()
                 if any(temp_keyword.lower() in temp_stream_string for temp_keyword in queried_keywords):
                     queried_streams.append(temp_stream) 
